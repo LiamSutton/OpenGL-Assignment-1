@@ -41,7 +41,12 @@ char g_acFile[256];
 bool shouldRenderArcs = true;
 bool shouldRenderNodes = true;
 bool shouldRenderText = true;
+bool nodePositionIsRandom = false;
 
+// Used when user selects position to be random;
+float x_position[80];
+float y_position[80];
+float z_position[80];
 
 // core functions -> reduce to just the ones needed by glut as pointers to functions to fulfill tasks
 void display(); // The rendering function. This is called once for each frame and you should put rendering code here
@@ -59,6 +64,7 @@ void myInit(); // the myinit function runs once, before rendering starts and sho
 void nodeDisplay(chNode *pNode); // callled by the display function to draw nodes
 void arcDisplay(chArc *pArc); // called by the display function to draw arcs
 void buildGrid(); // 
+void generateRandomPositions(float x[], float y[], float z[]);
 
 void nodeDisplay(chNode *pNode) // function to render a node (called from display())
 {
@@ -100,9 +106,14 @@ void nodeDisplay(chNode *pNode) // function to render a node (called from displa
 			utilitiesColourToMat(afCol, 2.0f);
 		}
 
-		// Convert colour to usable material
+		if (nodePositionIsRandom) {
+			unsigned int idx = pNode->m_uiId;
+			glTranslatef(x_position[idx], y_position[idx], z_position[idx]);
+		}
+		else {
+			glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
+		}
 
-		glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
 
 		if (worldSystem == 1) { // First world
 			glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
@@ -141,11 +152,22 @@ void arcDisplay(chArc *pArc) // function to render an arc (called from display()
 	glEnable(GL_COLOR_MATERIAL);
 	glDisable(GL_LIGHTING);
 
-	glBegin(GL_LINES); // Begin drawing the line
+	glBegin(GL_LINES);
+	if (nodePositionIsRandom) {
+		unsigned int idx0 = m_pNode0->m_uiId;
+		unsigned int idx1 = m_pNode1->m_uiId;
+
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex3f(x_position[idx0], y_position[idx0], z_position[idx0]);
+		glColor3f(0.0f, 1.0f, 0.0f);
+		glVertex3f(x_position[idx1], y_position[idx1], z_position[idx1]);
+	}
+	else {
 		glColor3f(1.0f, 0.0f, 0.0f);
 		glVertex3f(arcPos0[0], arcPos0[1], arcPos0[2]);
 		glColor3f(0.0f, 1.0f, 0.0f);
 		glVertex3f(arcPos1[0], arcPos1[1], arcPos1[2]);
+	}
 	glEnd();
 }
 
@@ -161,12 +183,11 @@ void display()
 	if (controlActive(g_Control, csg_uiControlDrawGrid)) glCallList(gs_uiGridDisplayList);
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS); // push attribute state to enable constrained state changes
+	
 	if (shouldRenderNodes) {
 		visitNodes(&g_System, nodeDisplay); // loop through all of the nodes and draw them with the nodeDisplay function
 	}
 
-
-	
 	if (shouldRenderArcs) {
 		visitArcs(&g_System, arcDisplay); // loop through all of the arcs and draw them with the arcDisplay function
 	}
@@ -203,7 +224,7 @@ void reshape(int iWidth, int iHeight)
 // detect key presses and assign them to actions
 void keyboard(unsigned char c, int iXPos, int iYPos)
 {
-	switch(c)
+	switch (c)
 	{
 	case 'w':
 		camInputTravel(g_Input, tri_pos); // mouse zoom
@@ -219,12 +240,23 @@ void keyboard(unsigned char c, int iXPos, int iYPos)
 		break;
 	case 'r':
 		shouldRenderNodes = !shouldRenderNodes; // Toggle the drawing of the nodes
+		printf("[INFO]: Should render nodes changed: new Value: %s \n", shouldRenderNodes ? "True" : "False");
 		break;
 	case 'a':
 		shouldRenderArcs = !shouldRenderArcs; // Toggle the drawing of the arcs
+		printf("[INFO]: Should render arcs changed: new Value: %s \n", shouldRenderArcs ? "True" : "False");
 		break;
 	case 't':
 		shouldRenderText = !shouldRenderText; // Toggle the drawing of text (country names)
+		printf("[INFO]: Should render text changed: new Value: %s \n", shouldRenderText ? "True" : "False");
+		break;
+	case 'q':
+		if (!nodePositionIsRandom) {
+			generateRandomPositions(x_position, y_position, z_position);
+		}
+		nodePositionIsRandom = !nodePositionIsRandom;
+		printf("[INFO]: Node position is random changed: new Value %s \n", nodePositionIsRandom ? "True" : "False");
+		break;
 	}
 }
 
@@ -319,6 +351,7 @@ void myInit()
 	// initialise the data system and load the data file
 	initSystem(&g_System);
 	parse(g_acFile, parseSection, parseNetwork, parseArc, parsePartition, parseVector);
+	generateRandomPositions(x_position, y_position, z_position);
 }
 
 int main(int argc, char* argv[])
@@ -394,4 +427,12 @@ void buildGrid()
 	glPopAttrib(); // pop attrib marker (undo switching off lighting)
 
 	glEndList(); // finish recording the displaylist
+}
+
+void generateRandomPositions(float x[], float y[], float z[]) {
+	for (int i = 0; i < 80; i++) {
+		x[i] = randFloat(-1000, 1000);
+		y[i] = randFloat(-1000, 1000);
+		z[i] = randFloat(-1000, 1000);
+	}
 }
