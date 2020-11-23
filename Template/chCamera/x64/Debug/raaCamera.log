@@ -1,0 +1,3 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(491,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (raaCamera.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  chCamera.cpp
+E:\Downloads\Assignment1-2019(1)\Assignment1-2019\Template\raaCamera\chCamera.cpp(5,10): fatal error C1083: Cannot open include file: 'raaMaths/raaVector.h': No such file or directory
