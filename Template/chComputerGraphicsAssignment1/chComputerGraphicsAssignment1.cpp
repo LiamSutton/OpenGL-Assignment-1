@@ -64,8 +64,38 @@ void nodeDisplay(chNode *pNode) // function to render a node (called from displa
 	glPushMatrix(); // Push current matrix
 	glPushAttrib(GL_ALL_ATTRIB_BITS); // Push current attributes
 
-	float afCol[] = { 0.0f, 0.0f, 1.0f, 1.0f }; // Set colour for primative
-	utilitiesColourToMat(afCol, 2.0f); // Convert colour to usable material
+
+	if (continent == 1) { 
+		float afCol[4] ={ 1.0f, 0.0f, 0.0f, 1.0f }; 
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 2) {
+		float afCol[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 3) {
+		float afCol[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 4) {
+		float afCol[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 5) {
+		float afCol[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 6) {
+		float afCol[4] = { 0.0f, 1.0f, 1.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+	
+	 // Convert colour to usable material
 
 	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
 	glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15); // Render a sphere representing the node with a size corelating to the nodes mass
