@@ -38,9 +38,6 @@ const static char csg_acFileParam[] = {"-input"};
 // global var: file to load data from
 char g_acFile[256];
 
-float x_positions[80];
-float y_positions[80];
-float z_positions[80];
 
 // core functions -> reduce to just the ones needed by glut as pointers to functions to fulfill tasks
 void display(); // The rendering function. This is called once for each frame and you should put rendering code here
@@ -61,17 +58,39 @@ void buildGrid(); //
 
 void nodeDisplay(chNode *pNode) // function to render a node (called from display())
 {
-	/*printf("Name: %s \n", pNode->m_acName);*/
-	int idx = pNode->m_uiId;
-	glTranslatef(x_positions[idx], y_positions[idx], 0);
-	glutSolidSphere(5, 10, 10);
-	//printf("Unique ID of Node: %d \n", pNode->m_uiId);
-	//printf("Name: %s \n", pNode->m_acName);
+	float* position = pNode->m_afPosition; // The world position of the node
+	unsigned int continent = pNode->m_uiContinent; // The continent id of the nodes country
+	
+	glPushMatrix(); // Push current matrix
+	glPushAttrib(GL_ALL_ATTRIB_BITS); // Push current attributes
+
+	float afCol[] = { 0.0f, 0.0f, 1.0f, 1.0f }; // Set colour for primative
+	utilitiesColourToMat(afCol, 2.0f); // Convert colour to usable material
+
+	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
+	glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15); // Render a sphere representing the node with a size corelating to the nodes mass
+
+	glPopMatrix(); // Pop matrix and return to previous state
+	glPopAttrib(); // Pop attributes and return to previous state
 }
 
 void arcDisplay(chArc *pArc) // function to render an arc (called from display())
 {
-	// put your arc rendering (ogl) code here
+	chNode* m_pNode0 = pArc->m_pNode0; // Get a refference to the node representing the start of the arc
+	chNode* m_pNode1 = pArc->m_pNode1; // Get a refference to the node representing the end of the arc
+
+	float* arcPos0 = m_pNode0->m_afPosition; // Pull the position of the start node
+	float* arcPos1 = m_pNode1->m_afPosition; // Pull the position of the end node
+
+	glEnable(GL_COLOR_MATERIAL);
+	glDisable(GL_LIGHTING);
+
+	glBegin(GL_LINES); // Begin drawing the line
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex3f(arcPos0[0], arcPos0[1], arcPos0[2]);
+		glColor3f(0.0f, 1.0f, 0.0f);
+		glVertex3f(arcPos1[0], arcPos1[1], arcPos1[2]);
+	glEnd();
 }
 
 // draw the scene. Called once per frame and should only deal with scene drawing (not updating the simulator)
@@ -90,15 +109,6 @@ void display()
 	visitArcs(&g_System, arcDisplay); // loop through all of the arcs and draw them with the arcDisplay function
 	glPopAttrib();
 
-	float afCol[] = { 0.3f, 1.0f, 0.5f, 1.0f };
-	utilitiesColourToMat(afCol, 2.0f);
-
-	glPushMatrix();
-
-	glTranslatef(0.0f, 30.0f, 0.0f);
-	glutSolidSphere(5.0f, 10, 10);
-
-	glPopMatrix();
 
 	glFlush(); // ensure all the ogl instructions have been processed
 	glutSwapBuffers(); // present the rendered scene to the screen
@@ -214,12 +224,6 @@ void myInit()
 
 	// initalise the maths library
 	initMaths();
-
-	for (int i = 0; i < 80; i++) {
-		x_positions[i] = randFloat(-30, 30);
-		y_positions[i] = randFloat(-30, 30);
-		//z_positions[i] = randFloat(0, 30);
-	}
 
 	// Camera setup
 	camInit(g_Camera); // initalise the camera model
