@@ -38,6 +38,10 @@ const static char csg_acFileParam[] = {"-input"};
 // global var: file to load data from
 char g_acFile[256];
 
+bool shouldRenderArcs = true;
+bool shouldRenderNodes = true;
+bool shouldRenderText = true;
+
 
 // core functions -> reduce to just the ones needed by glut as pointers to functions to fulfill tasks
 void display(); // The rendering function. This is called once for each frame and you should put rendering code here
@@ -58,69 +62,72 @@ void buildGrid(); //
 
 void nodeDisplay(chNode *pNode) // function to render a node (called from display())
 {
-	float* position = pNode->m_afPosition; // The world position of the node
-	unsigned int continent = pNode->m_uiContinent; // The continent id of the nodes country
-	unsigned int worldSystem = pNode->m_uiWorldSystem; // The system the nodes country belongs to (IE: England = 1st world)
-	
-	glPushMatrix(); // Push current matrix
-	glPushAttrib(GL_ALL_ATTRIB_BITS); // Push current attributes
+		float* position = pNode->m_afPosition; // The world position of the node
+		unsigned int continent = pNode->m_uiContinent; // The continent id of the nodes country
+		unsigned int worldSystem = pNode->m_uiWorldSystem; // The system the nodes country belongs to (IE: England = 1st world)
+
+		glPushMatrix(); // Push current matrix
+		glPushAttrib(GL_ALL_ATTRIB_BITS); // Push current attributes
 
 
-	if (continent == 1) { // Africa
-		float afCol[4] ={ 1.0f, 0.0f, 0.0f, 1.0f }; 
-		utilitiesColourToMat(afCol, 2.0f);
-	}
+		if (continent == 1) { // Africa
+			float afCol[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+			utilitiesColourToMat(afCol, 2.0f);
+		}
 
-	if (continent == 2) { // Asia
-		float afCol[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
-	}
+		if (continent == 2) { // Asia
+			float afCol[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+			utilitiesColourToMat(afCol, 2.0f);
+		}
 
-	if (continent == 3) { // Europe
-		float afCol[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
-	}
+		if (continent == 3) { // Europe
+			float afCol[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+			utilitiesColourToMat(afCol, 2.0f);
+		}
 
-	if (continent == 4) { // North America
-		float afCol[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
-	}
+		if (continent == 4) { // North America
+			float afCol[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+			utilitiesColourToMat(afCol, 2.0f);
+		}
 
-	if (continent == 5) { // Oceania
-		float afCol[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
-	}
+		if (continent == 5) { // Oceania
+			float afCol[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+			utilitiesColourToMat(afCol, 2.0f);
+		}
 
-	if (continent == 6) { // South America
-		float afCol[4] = { 0.0f, 1.0f, 1.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
-	}
-	
-	 // Convert colour to usable material
+		if (continent == 6) { // South America
+			float afCol[4] = { 0.0f, 1.0f, 1.0f, 1.0f };
+			utilitiesColourToMat(afCol, 2.0f);
+		}
 
-	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
+		// Convert colour to usable material
 
-	if (worldSystem == 1) { // First world
-		glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
-	}
+		glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
 
-	if (worldSystem == 2) { // Second world
-		glutSolidCube(mathsDimensionOfCubeFromVolume(pNode->m_fMass));
-	}
+		if (worldSystem == 1) { // First world
+			glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
+		}
 
-	if (worldSystem == 3) { // Third world
-		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f); // Rotate cone to be facing upwards
-		glutSolidCone(mathsRadiusOfConeFromVolume(pNode->m_fMass), 25, 15, 15);
-		glRotatef(90, 1.0f, 0.0f, 0.0f); // Reverse rotation back for text placement
-	}
+		if (worldSystem == 2) { // Second world
+			glutSolidCube(mathsDimensionOfCubeFromVolume(pNode->m_fMass));
+		}
 
-	glTranslatef(0.0f, 20.0f, 0.0f); // Translate so text will render 20 units above center node
-	glScalef(10.0f, 10.0f, 10.0f); // Scale up the text for readability
-	glRotatef(-90, 0.0f, 1.0f, 0.0f); // 
-	outlinePrint(pNode->m_acName);
-	
-	glPopMatrix(); // Pop matrix and return to previous state
-	glPopAttrib(); // Pop attributes and return to previous state
+		if (worldSystem == 3) { // Third world
+			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f); // Rotate cone to be facing upwards
+			glutSolidCone(mathsRadiusOfConeFromVolume(pNode->m_fMass), 25, 15, 15);
+			glRotatef(90, 1.0f, 0.0f, 0.0f); // Reverse rotation back for text placement
+		}
+
+		if (shouldRenderText) {
+			glTranslatef(0.0f, 20.0f, 0.0f); // Translate so text will render 20 units above center node
+			glScalef(10.0f, 10.0f, 10.0f); // Scale up the text for readability
+			glRotatef(-90, 0.0f, 1.0f, 0.0f); // 
+			outlinePrint(pNode->m_acName);
+		}
+
+
+		glPopMatrix(); // Pop matrix and return to previous state
+		glPopAttrib(); // Pop attributes and return to previous state
 }
 
 void arcDisplay(chArc *pArc) // function to render an arc (called from display())
@@ -154,8 +161,16 @@ void display()
 	if (controlActive(g_Control, csg_uiControlDrawGrid)) glCallList(gs_uiGridDisplayList);
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS); // push attribute state to enable constrained state changes
-	visitNodes(&g_System, nodeDisplay); // loop through all of the nodes and draw them with the nodeDisplay function
-	visitArcs(&g_System, arcDisplay); // loop through all of the arcs and draw them with the arcDisplay function
+	if (shouldRenderNodes) {
+		visitNodes(&g_System, nodeDisplay); // loop through all of the nodes and draw them with the nodeDisplay function
+	}
+
+
+	
+	if (shouldRenderArcs) {
+		visitArcs(&g_System, arcDisplay); // loop through all of the arcs and draw them with the arcDisplay function
+	}
+	
 	glPopAttrib();
 
 
@@ -202,6 +217,14 @@ void keyboard(unsigned char c, int iXPos, int iYPos)
 	case 'g':
 		controlToggle(g_Control, csg_uiControlDrawGrid); // toggle the drawing of the grid
 		break;
+	case 'r':
+		shouldRenderNodes = !shouldRenderNodes; // Toggle the drawing of the nodes
+		break;
+	case 'a':
+		shouldRenderArcs = !shouldRenderArcs; // Toggle the drawing of the arcs
+		break;
+	case 't':
+		shouldRenderText = !shouldRenderText; // Toggle the drawing of text (country names)
 	}
 }
 
