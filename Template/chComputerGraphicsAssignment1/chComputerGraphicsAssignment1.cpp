@@ -60,6 +60,7 @@ void nodeDisplay(chNode *pNode) // function to render a node (called from displa
 {
 	float* position = pNode->m_afPosition; // The world position of the node
 	unsigned int continent = pNode->m_uiContinent; // The continent id of the nodes country
+	unsigned int worldSystem = pNode->m_uiWorldSystem; // The system the nodes country belongs to (IE: England = 1st world)
 	
 	glPushMatrix(); // Push current matrix
 	glPushAttrib(GL_ALL_ATTRIB_BITS); // Push current attributes
@@ -98,7 +99,20 @@ void nodeDisplay(chNode *pNode) // function to render a node (called from displa
 	 // Convert colour to usable material
 
 	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
-	glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15); // Render a sphere representing the node with a size corelating to the nodes mass
+
+	if (worldSystem == 1) {
+		glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
+	}
+
+	if (worldSystem == 2) {
+		
+		glutSolidCube(mathsDimensionOfCubeFromVolume(pNode->m_fMass));
+	}
+
+	if (worldSystem == 3) {
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+		glutSolidCone(mathsRadiusOfConeFromVolume(pNode->m_fMass), 25, 15, 15);
+	}
 
 	glPopMatrix(); // Pop matrix and return to previous state
 	glPopAttrib(); // Pop attributes and return to previous state
