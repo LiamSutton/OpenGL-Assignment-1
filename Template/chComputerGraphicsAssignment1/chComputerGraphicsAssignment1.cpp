@@ -66,32 +66,32 @@ void nodeDisplay(chNode *pNode) // function to render a node (called from displa
 	glPushAttrib(GL_ALL_ATTRIB_BITS); // Push current attributes
 
 
-	if (continent == 1) { 
+	if (continent == 1) { // Africa
 		float afCol[4] ={ 1.0f, 0.0f, 0.0f, 1.0f }; 
 		utilitiesColourToMat(afCol, 2.0f);
 	}
 
-	if (continent == 2) {
+	if (continent == 2) { // Asia
 		float afCol[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
 		utilitiesColourToMat(afCol, 2.0f);
 	}
 
-	if (continent == 3) {
+	if (continent == 3) { // Europe
 		float afCol[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
 		utilitiesColourToMat(afCol, 2.0f);
 	}
 
-	if (continent == 4) {
+	if (continent == 4) { // North America
 		float afCol[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 		utilitiesColourToMat(afCol, 2.0f);
 	}
 
-	if (continent == 5) {
+	if (continent == 5) { // Oceania
 		float afCol[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
 		utilitiesColourToMat(afCol, 2.0f);
 	}
 
-	if (continent == 6) {
+	if (continent == 6) { // South America
 		float afCol[4] = { 0.0f, 1.0f, 1.0f, 1.0f };
 		utilitiesColourToMat(afCol, 2.0f);
 	}
@@ -100,20 +100,25 @@ void nodeDisplay(chNode *pNode) // function to render a node (called from displa
 
 	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
 
-	if (worldSystem == 1) {
+	if (worldSystem == 1) { // First world
 		glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
 	}
 
-	if (worldSystem == 2) {
-		
+	if (worldSystem == 2) { // Second world
 		glutSolidCube(mathsDimensionOfCubeFromVolume(pNode->m_fMass));
 	}
 
-	if (worldSystem == 3) {
-		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+	if (worldSystem == 3) { // Third world
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f); // Rotate cone to be facing upwards
 		glutSolidCone(mathsRadiusOfConeFromVolume(pNode->m_fMass), 25, 15, 15);
+		glRotatef(90, 1.0f, 0.0f, 0.0f); // Reverse rotation back for text placement
 	}
 
+	glTranslatef(0.0f, 20.0f, 0.0f); // Translate so text will render 20 units above center node
+	glScalef(10.0f, 10.0f, 10.0f); // Scale up the text for readability
+	glRotatef(-90, 0.0f, 1.0f, 0.0f); // 
+	outlinePrint(pNode->m_acName);
+	
 	glPopMatrix(); // Pop matrix and return to previous state
 	glPopAttrib(); // Pop attributes and return to previous state
 }
