@@ -42,7 +42,7 @@ bool shouldRenderArcs = true; // used to tell OpenGl whether it should render th
 bool shouldRenderNodes = true; // used to tell OpenGl whether it should render the nodes
 bool shouldRenderText = true; // used to tell OpenGl whether it should render the text label for the nodes
 bool nodePositionIsRandom = false; // used to tell OpenGl whether nodes should be positioned randomly
-bool shouldRunSolver = false; // used to tell OpenGl whether the solver should run
+bool simulationIsRunning = false; // used to tell OpenGl whether the solver should run
 
 // Used when user selects position to be random;
 float x_position[80];
@@ -195,6 +195,8 @@ void calculateDistance(chArc* pArc)
 {
 	chNode* pNode0 = pArc->m_pNode0; // Get reference to node at start of arc
 	chNode* pNode1 = pArc->m_pNode1; // Get reference to node at end of arc
+
+	float distance = vecDistance(pNode0->m_afPosition, pNode1->m_afPosition); // Get the distance between the two nodes in the arc
 }
 
 // draw the scene. Called once per frame and should only deal with scene drawing (not updating the simulator)
@@ -228,7 +230,7 @@ void display()
 // processing of system and camera data outside of the renderng loop
 void idle()
 {
-	if (shouldRunSolver) 
+	if (simulationIsRunning) 
 	{
 
 	}
@@ -288,8 +290,8 @@ void keyboard(unsigned char c, int iXPos, int iYPos)
 		printf("[INFO]: Node position is random changed: new Value %s \n", nodePositionIsRandom ? "True" : "False");
 		break;
 	case 't':
-		shouldRunSolver = !shouldRunSolver; // Toggle the solver running
-		printf("[INFO]: Solver running changed: new Value is %s \n", shouldRunSolver ? "True" : "False");
+		simulationIsRunning = !simulationIsRunning; // Toggle the simulation
+		printf("[INFO]: Simulation running changed: new Value is %s \n", simulationIsRunning ? "True" : "False");
 	}
 }
 
