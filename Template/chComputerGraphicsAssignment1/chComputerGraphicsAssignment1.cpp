@@ -35,6 +35,7 @@ chControl g_Control; // set of flag controls used in my implmentation to retain 
 // global var: parameter name for the file to load
 const static char csg_acFileParam[] = { "-input" };
 
+const static float k = 0.1f;
 // global var: file to load data from
 char g_acFile[256];
 
@@ -195,8 +196,25 @@ void calculateDistance(chArc* pArc)
 {
 	chNode* pNode0 = pArc->m_pNode0; // Get reference to node at start of arc
 	chNode* pNode1 = pArc->m_pNode1; // Get reference to node at end of arc
+	
+	float directionVector[4];
+	float directionVectorNormalised[4];
+	float directionVectorMult[4];
+	vecInit(directionVector);
+	vecInit(directionVectorNormalised);
+	vecInit(directionVectorMult);
 
-	float distance = vecDistance(pNode0->m_afPosition, pNode1->m_afPosition); // Get the distance between the two nodes in the arc
+	vecSub(pNode1->m_afPosition, pNode0->m_afPosition, directionVector); // Get direction vector
+
+	float currentLength = vecLength(directionVector); // Get length of direction vector
+
+	vecNormalise(directionVector, directionVectorNormalised); // Normalise direction vector
+
+	float displacement = currentLength - pArc->m_fIdealLen;
+	vecScalarProduct(directionVectorNormalised, -spring_constant * displacement, directionVectorMult);
+
+	printf("Hookes Law value for Node: %d and Node: %d, = x: %f, y: %f, z: %f \n", pNode0->m_uiId, pNode1->m_uiId, directionVectorMult[0], directionVectorMult[1], directionVectorMult[2]);
+	printf("Displacement: %f \n", displacement);
 }
 
 // draw the scene. Called once per frame and should only deal with scene drawing (not updating the simulator)
@@ -232,6 +250,8 @@ void idle()
 {
 	if (simulationIsRunning) 
 	{
+		visitNodes(&g_System, resetForce); // for each body, reset the resultant force (f) to zero
+		visitArcs(&g_System, calculateDistance);
 
 	}
 	controlChangeResetAll(g_Control); // re-set the update status for all of the control flags
