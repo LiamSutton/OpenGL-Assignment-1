@@ -35,7 +35,8 @@ chControl g_Control; // set of flag controls used in my implmentation to retain 
 // global var: parameter name for the file to load
 const static char csg_acFileParam[] = { "-input" };
 
-const static float k = 0.1f;
+const static float k = 0.1f; // the spring constant
+const static float resting_length = 1.0f;
 // global var: file to load data from
 char g_acFile[256];
 
@@ -193,28 +194,34 @@ void resetForce(chNode* pNode) {
 }
 
 void calculateDistance(chArc* pArc) 
-{
+{	
 	chNode* pNode0 = pArc->m_pNode0; // Get reference to node at start of arc
 	chNode* pNode1 = pArc->m_pNode1; // Get reference to node at end of arc
-	
-	float directionVector[4];
-	float directionVectorNormalised[4];
-	float directionVectorMult[4];
-	vecInit(directionVector);
-	vecInit(directionVectorNormalised);
-	vecInit(directionVectorMult);
 
-	vecSub(pNode1->m_afPosition, pNode0->m_afPosition, directionVector); // Get direction vector
+	float d[4];
+	vecInit(d);
 
-	float currentLength = vecLength(directionVector); // Get length of direction vector
+	float l = 0.0f;
+	// a: Calculate the direction vector between the two nodes forming the arc as d and the distance between the two nodes l
+	vecSub(pNode1->m_afPosition, pNode0->m_afPosition, d);
+	vecNormalise(d, d);
+	l = vecDistance(pNode1->m_afPosition, pNode0->m_afPosition);
 
-	vecNormalise(directionVector, directionVectorNormalised); // Normalise direction vector
+	// b: Calculate the spring force (Hookes Law f = exention * coef of restitution) as a vector and accumulate these
+	// within the nodes affected (countries at either end). extention is l - resting length
+	// Regular Hooke's law formulae: f = -kx where k is a spring constant (higher value = stiffer spring) x = dissplacement
+	float extention = l - resting_length;
 
-	float displacement = currentLength - pArc->m_fIdealLen;
-	vecScalarProduct(directionVectorNormalised, -spring_constant * displacement, directionVectorMult);
+	float springForce[4];
+	vecInit(springForce);
+	vecScalarProduct(d, (-1*k*extention), springForce);
 
-	printf("Hookes Law value for Node: %d and Node: %d, = x: %f, y: %f, z: %f \n", pNode0->m_uiId, pNode1->m_uiId, directionVectorMult[0], directionVectorMult[1], directionVectorMult[2]);
-	printf("Displacement: %f \n", displacement);
+	printf("Node0: %d, Node1: %d \n", pNode0->m_uiId, pNode1->m_uiId);
+	printf("Spring Force: x: %f y: %f z: %f \n", springForce[0], springForce[1], springForce[2]);
+
+	// c: Calculate the vector force f for each node
+	// one of the nodes will have have a positive force and the other will have a negative force (newtons 3rd law of motion)
+	// but multiplying the force (scalar) +- f by the direction vector d
 }
 
 // draw the scene. Called once per frame and should only deal with scene drawing (not updating the simulator)
