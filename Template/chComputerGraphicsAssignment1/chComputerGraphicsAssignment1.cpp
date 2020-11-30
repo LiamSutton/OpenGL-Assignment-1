@@ -131,9 +131,10 @@ void nodeDisplay(chNode *pNode) // function to render a node (called from displa
 
 		if (shouldRenderText) {
 			glTranslatef(0.0f, 20.0f, 0.0f); // Translate so text will render 20 units above center node
+			//glScalef(16, 16, 0.1f) // Chris's value for text scaling
 			glScalef(10.0f, 10.0f, 10.0f); // Scale up the text for readability
-			glRotatef(-90, 0.0f, 1.0f, 0.0f); // 
-			outlinePrint(pNode->m_acName);
+			glMultMatrixf(camRotMatInv(g_Camera)); // Align the currnt stack with the camera (so text is always facing camera)
+			outlinePrint(pNode->m_acName, true); // Render the countries name as a text label
 		}
 
 
