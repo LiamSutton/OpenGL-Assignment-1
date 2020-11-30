@@ -38,10 +38,11 @@ const static char csg_acFileParam[] = {"-input"};
 // global var: file to load data from
 char g_acFile[256];
 
-bool shouldRenderArcs = true;
-bool shouldRenderNodes = true;
-bool shouldRenderText = true;
-bool nodePositionIsRandom = false;
+bool shouldRenderArcs = true; // used to tell OpenGl whether it should render the edges between nodes
+bool shouldRenderNodes = true; // used to tell OpenGl whether it should render the nodes
+bool shouldRenderText = true; // used to tell OpenGl whether it should render the text label for the nodes
+bool nodePositionIsRandom = false; // used to tell OpenGl whether nodes should be positioned randomly
+bool shouldRunSolver = false; // used to tell OpenGl whether the solver should run
 
 // Used when user selects position to be random;
 float x_position[80];
@@ -239,25 +240,28 @@ void keyboard(unsigned char c, int iXPos, int iYPos)
 	case 'g':
 		controlToggle(g_Control, csg_uiControlDrawGrid); // toggle the drawing of the grid
 		break;
-	case 'r':
+	case '1':
 		shouldRenderNodes = !shouldRenderNodes; // Toggle the drawing of the nodes
 		printf("[INFO]: Should render nodes changed: new Value: %s \n", shouldRenderNodes ? "True" : "False");
 		break;
-	case 'a':
+	case '2':
 		shouldRenderArcs = !shouldRenderArcs; // Toggle the drawing of the arcs
 		printf("[INFO]: Should render arcs changed: new Value: %s \n", shouldRenderArcs ? "True" : "False");
 		break;
-	case 't':
+	case '3':
 		shouldRenderText = !shouldRenderText; // Toggle the drawing of text (country names)
 		printf("[INFO]: Should render text changed: new Value: %s \n", shouldRenderText ? "True" : "False");
 		break;
-	case 'q':
+	case 'r':
 		if (!nodePositionIsRandom) {
 			generateRandomPositions(x_position, y_position, z_position);
 		}
 		nodePositionIsRandom = !nodePositionIsRandom;
 		printf("[INFO]: Node position is random changed: new Value %s \n", nodePositionIsRandom ? "True" : "False");
 		break;
+	case 't':
+		shouldRunSolver = !shouldRunSolver; // Toggle the solver running
+		printf("[INFO]: Solver running changed: new Value is %s \n", shouldRunSolver ? "True" : "False");
 	}
 }
 
