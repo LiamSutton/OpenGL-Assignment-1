@@ -189,8 +189,9 @@ void generateRandomPositions(float x[], float y[], float z[]) {
 // Step 1 of simulation
 void resetForce(chNode* pNode) {
 	// reset the resultant force F to 0
-	float forceX = 0.0f;
-	float forceY = 0.0f;
+	pNode->m_afForce[0] = 0.0f;
+	pNode->m_afForce[1] = 0.0f;
+	pNode->m_afForce[2] = 0.0f;
 }
 
 void calculateDistance(chArc* pArc) 

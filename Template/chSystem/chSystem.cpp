@@ -23,6 +23,7 @@ chNode* initNode(chNode* pNode, unsigned int uiId, float* pfPosition, float fMas
 		pNode->m_uiId = uiId;
 		pNode->m_uiContinent = 0;
 		pNode->m_uiWorldSystem = 0;
+		vecInitPVec(pNode->m_afForce);
 	}
 
 	return pNode;
