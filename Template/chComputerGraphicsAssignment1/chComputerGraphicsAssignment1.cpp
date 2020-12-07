@@ -70,6 +70,7 @@ void buildGrid();
 void generateRandomPositions(float x[], float y[], float z[]); // will generate random vertex's for each node to give new positions
 void resetForce(chNode* pNode);
 void calculateDistance(chArc* pArc);
+void applyForce(chNode* pNode, float force[3]);
 
 void nodeDisplay(chNode* pNode) // function to render a node (called from display())
 {
@@ -194,6 +195,9 @@ void resetForce(chNode* pNode) {
 	pNode->m_afForce[2] = 0.0f;
 }
 
+void applyForce(chNode* pNode, float force[3]) {
+	
+}
 void calculateDistance(chArc* pArc) 
 {	
 	chNode* pNode0 = pArc->m_pNode0; // Get reference to node at start of arc
@@ -213,16 +217,52 @@ void calculateDistance(chArc* pArc)
 	// Regular Hooke's law formulae: f = -kx where k is a spring constant (higher value = stiffer spring) x = dissplacement
 	float extention = l - resting_length;
 
-	float springForce[4];
+	float springForce[3];
 	vecInit(springForce);
-	vecScalarProduct(d, (-1*k*extention), springForce);
+	vecScalarProduct(d, ((-1*pArc->m_fSpringCoef)*extention), springForce);
 
-	printf("Node0: %d, Node1: %d \n", pNode0->m_uiId, pNode1->m_uiId);
+	//printf("Node0: %d, Node1: %d \n", pNode0->m_uiId, pNode1->m_uiId);x
 	printf("Spring Force: x: %f y: %f z: %f \n", springForce[0], springForce[1], springForce[2]);
 
 	// c: Calculate the vector force f for each node
 	// one of the nodes will have have a positive force and the other will have a negative force (newtons 3rd law of motion)
 	// but multiplying the force (scalar) +- f by the direction vector d
+	
+	
+
+}
+
+void hookes(chArc* pArc) {
+	chNode* pNode0 = pArc->m_pNode0;
+	chNode* pNode1 = pArc->m_pNode1;
+
+	float springLength = pArc->m_fIdealLen;
+	float dx = pNode0->m_afPosition[0] - pNode1->m_afPosition[0];
+	float dy = pNode0->m_afPosition[1] - pNode1->m_afPosition[1];
+	float dz = pNode0->m_afPosition[2] - pNode1->m_afPosition[2];
+
+	float distance = sqrt(dx * dx + dy * dy + dz * dz);
+
+	float d = distance - springLength;
+
+	float xUnit = dx / distance;
+	float yUnit = dy / distance;
+	float zUnit = dz / distance;
+
+	float springForceX = -1 * spring_constant * d * xUnit;
+	float springForceY = -1 * spring_constant * d * yUnit;
+	float springForceZ = -1 * spring_constant * d * zUnit;
+
+	pNode0->m_afForce[0] += springForceX;
+	pNode0->m_afForce[1] += springForceY;
+	pNode0->m_afForce[2] += springForceZ;
+
+	pNode0->m_afPosition[0] += pNode0->m_afForce[0] / pNode0->m_fMass;
+	pNode0->m_afPosition[1] += pNode0->m_afForce[1] / pNode0->m_fMass;
+	pNode0->m_afPosition[2] += pNode0->m_afForce[2] / pNode0->m_fMass;
+}
+
+void testHookes(chArc* pArc) {
 }
 
 // draw the scene. Called once per frame and should only deal with scene drawing (not updating the simulator)
@@ -259,7 +299,8 @@ void idle()
 	if (simulationIsRunning) 
 	{
 		visitNodes(&g_System, resetForce); // for each body, reset the resultant force (f) to zero
-		visitArcs(&g_System, calculateDistance);
+		/*visitArcs(&g_System, calculateDistance);*/
+		visitArcs(&g_System, hookes);
 
 	}
 	controlChangeResetAll(g_Control); // re-set the update status for all of the control flags
