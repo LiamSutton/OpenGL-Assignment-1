@@ -40,6 +40,8 @@ const static float resting_length = 5.0f;
 const static float time_step = 1.0f;
 const static float dampening_coefficient = 0.2f;
 const static float columb_constant = 500.0f;
+
+static int mainMenu;
 // global var: file to load data from
 char g_acFile[256];
 
@@ -73,8 +75,32 @@ void buildGrid();
 void generateRandomPositions(float x[], float y[], float z[]); // will generate random vertex's for each node to give new positions
 void resetForce(chNode* pNode);
 void calculateDistance(chArc* pArc);
-void applyForce(chNode* pNode, float force[3]);
+void createMenu();
+void processMenuEvents(int option);
 
+void createMenu() {
+	
+	mainMenu = glutCreateMenu(processMenuEvents);
+
+	glutAddMenuEntry("Toggle Edges", 1);
+	glutAddMenuEntry("Toggle Nodes", 2);
+
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+}
+
+void processMenuEvents(int option) {
+	switch (option)
+	{
+	case 1:
+		shouldRenderArcs = !shouldRenderArcs;
+		break;
+	case 2:
+		shouldRenderNodes = !shouldRenderNodes;
+		break;
+	default:
+		break;
+	}
+}
 void nodeDisplay(chNode* pNode) // function to render a node (called from display())
 {
 	float* position = pNode->m_afPosition; // The world position of the node
@@ -198,9 +224,6 @@ void resetForce(chNode* pNode) {
 	pNode->m_afForce[2] = 0.0f;
 }
 
-void applyForce(chNode* pNode, float force[3]) {
-	
-}
 void calculateDistance(chArc* pArc) 
 {	
 	chNode* pNode0 = pArc->m_pNode0; // Get reference to node at start of arc
@@ -488,6 +511,7 @@ void myInit()
 	initSystem(&g_System);
 	parse(g_acFile, parseSection, parseNetwork, parseArc, parsePartition, parseVector);
 	generateRandomPositions(x_position, y_position, z_position);
+	createMenu();
 }
 
 int main(int argc, char* argv[])
@@ -523,7 +547,6 @@ int main(int argc, char* argv[])
 		glutMouseFunc(mouse);
 		glutMotionFunc(motion);
 		glutMainLoop(); // start the rendering loop running, this will only ext when the rendering window is closed 
-
 		killFont(); // cleanup the text rendering process
 
 		return 0; // return a null error code to show everything worked
