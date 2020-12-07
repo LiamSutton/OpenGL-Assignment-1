@@ -23,6 +23,8 @@ typedef struct _chNode
 	unsigned int m_uiWorldSystem;
 	char m_acName[64];
 	float m_afForce[3];
+	float m_afAcceleration[3];
+	float m_afVelocity[3];
 } chNode;
 
 typedef struct _chArc

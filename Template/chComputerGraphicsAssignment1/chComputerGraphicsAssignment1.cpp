@@ -36,7 +36,10 @@ chControl g_Control; // set of flag controls used in my implmentation to retain 
 const static char csg_acFileParam[] = { "-input" };
 
 const static float k = 0.1f; // the spring constant
-const static float resting_length = 1.0f;
+const static float resting_length = 5.0f;
+const static float time_step = 1.0f;
+const static float dampening_coefficient = 0.2f;
+const static float columb_constant = 500.0f;
 // global var: file to load data from
 char g_acFile[256];
 
@@ -257,12 +260,40 @@ void hookes(chArc* pArc) {
 	pNode0->m_afForce[1] += springForceY;
 	pNode0->m_afForce[2] += springForceZ;
 
-	pNode0->m_afPosition[0] += pNode0->m_afForce[0] / pNode0->m_fMass;
-	pNode0->m_afPosition[1] += pNode0->m_afForce[1] / pNode0->m_fMass;
-	pNode0->m_afPosition[2] += pNode0->m_afForce[2] / pNode0->m_fMass;
 }
 
-void testHookes(chArc* pArc) {
+
+void moveNodes(chArc* pArc) {
+	chNode* pNode0 = pArc->m_pNode0;
+
+	if (nodePositionIsRandom) {
+		x_position[pNode0->m_uiId] += pNode0->m_afForce[0] / pNode0->m_fMass;
+		y_position[pNode0->m_uiId] += pNode0->m_afForce[1] / pNode0->m_fMass;
+		z_position[pNode0->m_uiId] += pNode0->m_afForce[2] / pNode0->m_fMass;
+	}
+	else {
+		pNode0->m_afPosition[0] += pNode0->m_afForce[0] / pNode0->m_fMass;
+		pNode0->m_afPosition[1] += pNode0->m_afForce[1] / pNode0->m_fMass;
+		pNode0->m_afPosition[2] += pNode0->m_afForce[2] / pNode0->m_fMass;
+	}
+}
+
+void calculateMotion(chNode* pNode) {
+
+	// Calculate acceleration due to the spring force.
+
+	// f=ma therefore a=f/m
+	pNode->m_afAcceleration[0] = pNode->m_afForce[0] / pNode->m_fMass;
+	pNode->m_afAcceleration[1] = pNode->m_afForce[1] / pNode->m_fMass;
+	pNode->m_afAcceleration[2] = pNode->m_afForce[2] / pNode->m_fMass;
+	
+	pNode->m_afVelocity[0] = (pNode->m_afVelocity[0] + time_step * pNode->m_afAcceleration[0]) * dampening_coefficient;
+	pNode->m_afVelocity[1] = (pNode->m_afVelocity[1] + time_step * pNode->m_afAcceleration[1]) * dampening_coefficient;
+	pNode->m_afVelocity[2] = (pNode->m_afVelocity[2] + time_step * pNode->m_afAcceleration[2]) * dampening_coefficient;
+
+	pNode->m_afPosition[0] = pNode->m_afPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
+	pNode->m_afPosition[1] = pNode->m_afPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
+	pNode->m_afPosition[2] = pNode->m_afPosition[2] + time_step * pNode->m_afVelocity[2] + pNode->m_afAcceleration[2] * pow(time_step, 2.0f) / 2.0f;
 }
 
 // draw the scene. Called once per frame and should only deal with scene drawing (not updating the simulator)
@@ -301,6 +332,7 @@ void idle()
 		visitNodes(&g_System, resetForce); // for each body, reset the resultant force (f) to zero
 		/*visitArcs(&g_System, calculateDistance);*/
 		visitArcs(&g_System, hookes);
+		visitNodes(&g_System, calculateMotion);
 
 	}
 	controlChangeResetAll(g_Control); // re-set the update status for all of the control flags

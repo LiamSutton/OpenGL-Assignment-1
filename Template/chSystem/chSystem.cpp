@@ -24,6 +24,8 @@ chNode* initNode(chNode* pNode, unsigned int uiId, float* pfPosition, float fMas
 		pNode->m_uiContinent = 0;
 		pNode->m_uiWorldSystem = 0;
 		vecInitPVec(pNode->m_afForce);
+		vecInitPVec(pNode->m_afAcceleration);
+		vecInitPVec(pNode->m_afVelocity);
 	}
 
 	return pNode;
