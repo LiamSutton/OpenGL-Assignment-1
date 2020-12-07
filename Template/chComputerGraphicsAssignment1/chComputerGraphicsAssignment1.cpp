@@ -40,6 +40,7 @@ const static float resting_length = 5.0f;
 const static float time_step = 1.0f;
 const static float dampening_coefficient = 0.2f;
 const static float columb_constant = 500.0f;
+const static float spring_constant = 0.1f;
 
 static int mainMenu;
 // global var: file to load data from
@@ -47,10 +48,9 @@ char g_acFile[256];
 
 bool shouldRenderArcs = true; // used to tell OpenGl whether it should render the edges between nodes
 bool shouldRenderNodes = true; // used to tell OpenGl whether it should render the nodes
-bool shouldRenderText = true; // used to tell OpenGl whether it should render the text label for the nodes
+bool shouldRenderText = true;  // used to tell OpenGl whether it should render the text label for the nodes
 bool nodePositionIsRandom = false; // used to tell OpenGl whether nodes should be positioned randomly
 bool simulationIsRunning = false; // used to tell OpenGl whether the solver should run
-
 // Used when user selects position to be random;
 float x_position[80];
 float y_position[80];
@@ -84,6 +84,9 @@ void createMenu() {
 
 	glutAddMenuEntry("Toggle Edges", 1);
 	glutAddMenuEntry("Toggle Nodes", 2);
+	glutAddMenuEntry("Toggle Text", 3);
+	glutAddMenuEntry("Toggle Grid", 4);
+	glutAddMenuEntry("Toggle Solver", 5);
 
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
@@ -96,6 +99,15 @@ void processMenuEvents(int option) {
 		break;
 	case 2:
 		shouldRenderNodes = !shouldRenderNodes;
+		break;
+	case 3:
+		shouldRenderText = !shouldRenderText;
+		break;
+	case 4:
+		controlToggle(g_Control, csg_uiControlDrawGrid);
+		break;
+	case 5:
+		simulationIsRunning = !simulationIsRunning;
 		break;
 	default:
 		break;
@@ -208,6 +220,7 @@ void arcDisplay(chArc* pArc) // function to render an arc (called from display()
 }
 
 // This function will generate a random vertex for each node present in the list
+// TODO: THIS IS DOGSHITE FIX IT
 void generateRandomPositions(float x[], float y[], float z[]) {
 	for (int i = 0; i < 80; i++) {
 		x[i] = randFloat(-1000, 1000);
@@ -259,29 +272,29 @@ void calculateDistance(chArc* pArc)
 }
 
 void hookes(chArc* pArc) {
-	chNode* pNode0 = pArc->m_pNode0;
-	chNode* pNode1 = pArc->m_pNode1;
+	chNode* pNode0 = pArc->m_pNode0; // Reference to node at start of arc
+	chNode* pNode1 = pArc->m_pNode1; // Reference to node at end of arc
 
-	float springLength = pArc->m_fIdealLen;
-	float dx = pNode0->m_afPosition[0] - pNode1->m_afPosition[0];
-	float dy = pNode0->m_afPosition[1] - pNode1->m_afPosition[1];
-	float dz = pNode0->m_afPosition[2] - pNode1->m_afPosition[2];
+	float springLength = pArc->m_fIdealLen; // get the ideal length of the spring (rest)
+	float dx = pNode0->m_afPosition[0] - pNode1->m_afPosition[0]; // Get x distance between the nodes
+	float dy = pNode0->m_afPosition[1] - pNode1->m_afPosition[1]; // Get y distance between the nodes
+	float dz = pNode0->m_afPosition[2] - pNode1->m_afPosition[2]; // Get z distance between the nodes
 
-	float distance = sqrt(dx * dx + dy * dy + dz * dz);
+	float distance = sqrt(dx * dx + dy * dy + dz * dz); // Use classical distance formulae
 
-	float d = distance - springLength;
+	float d = distance - springLength; // calculate displacement of spring
 
 	float xUnit = dx / distance;
 	float yUnit = dy / distance;
 	float zUnit = dz / distance;
 
-	float springForceX = -1 * spring_constant * d * xUnit;
-	float springForceY = -1 * spring_constant * d * yUnit;
-	float springForceZ = -1 * spring_constant * d * zUnit;
+	float springForceX = -1 * spring_constant * d * xUnit; // calculate spring force x axis
+	float springForceY = -1 * spring_constant * d * yUnit; // calculate spring force y axis
+	float springForceZ = -1 * spring_constant * d * zUnit; // calculate spring force z axis
 
-	pNode0->m_afForce[0] += springForceX;
-	pNode0->m_afForce[1] += springForceY;
-	pNode0->m_afForce[2] += springForceZ;
+	pNode0->m_afForce[0] += springForceX; // apply force to start nodes x axis
+	pNode0->m_afForce[1] += springForceY; // apply force to start nodes y axis
+	pNode0->m_afForce[2] += springForceZ; // apply force to start nodes z axis
 
 }
 
@@ -403,7 +416,7 @@ void keyboard(unsigned char c, int iXPos, int iYPos)
 		printf("[INFO]: Should render arcs changed: new Value: %s \n", shouldRenderArcs ? "True" : "False");
 		break;
 	case '3':
-		shouldRenderText = !shouldRenderText; // Toggle the drawing of text (country names)
+		//shouldRenderText = !shouldRenderText; // Toggle the drawing of text (country names)
 		printf("[INFO]: Should render text changed: new Value: %s \n", shouldRenderText ? "True" : "False");
 		break;
 	case 'r':

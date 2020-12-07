@@ -13,5 +13,3 @@ std::string constantContinentIndexToName(int i)
 		default: return "Unknown";
 	}
 }
-
-const static float SPRING_CONSTANT = 0.1f;

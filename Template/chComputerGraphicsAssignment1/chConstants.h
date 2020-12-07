@@ -50,6 +50,3 @@ const static float csg_fDisplayListGridMin = -500.0f;
 const static float csg_fDisplayListGridMax = 500.0f;
 const static float csg_fDisplayListGridSpace = 50.0f;
 static unsigned int gs_uiGridDisplayList = 0;
-
-// Values
-const static float spring_constant = 0.1f;
