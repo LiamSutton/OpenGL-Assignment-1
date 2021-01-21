@@ -20,6 +20,7 @@ typedef struct _chNode
 	float m_afPosition[4];
 	float m_afRandomPosition[4];
 	float m_afContinentPosition[4];
+	float m_afWorldSystemPosition[4];
 	float m_fMass;
 	unsigned int m_uiContinent;
 	unsigned int m_uiWorldSystem;

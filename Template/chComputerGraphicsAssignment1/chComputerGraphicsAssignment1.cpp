@@ -55,7 +55,8 @@ const static int COLOUR_MODE_BLUE = 3; //colour all shapes blue
 static int positionMode;
 const static int POSITION_DEFAULT = 0;
 const static int POSITION_CONTINENT = 1;
-const static int POSITION_RANDOM = 2;
+const static int POSITION_WORLD_SYSTEM = 2;
+const static int POSITION_RANDOM = 3;
 
 static int mainMenu;
 static int toggleMenu;
@@ -90,6 +91,7 @@ void buildGrid();
 void getContinentCount();
 void generateRandomPositions(chNode* pNode); // will generate random vertecies for each node to give new positions
 void setContinentPosition(chNode* pNode);
+void setWorldSystemPosition(chNode* pNode);
 void resetForce(chNode* pNode);
 void createMenu();
 void processMenuEvents(int option);
@@ -127,10 +129,11 @@ void createMenu() {
 	positionModeMenu = glutCreateMenu(processPositionModeMenuEvents);
 	glutAddMenuEntry("Default positions", 11);
 	glutAddMenuEntry("Group by Continent", 12);
-	glutAddMenuEntry("Randomise Positions", 13);
+	glutAddMenuEntry("Group by World System", 13);
+	glutAddMenuEntry("Randomise Positions", 14);
 
 	mainMenu = glutCreateMenu(processMenuEvents);
-	glutAddMenuEntry("Toggle Solver", 14);
+	glutAddMenuEntry("Toggle Solver", 15);
 
 	glutAddSubMenu("Render Modes", renderModeMenu);
 	glutAddSubMenu("Toggle Options", toggleMenu);
@@ -146,7 +149,7 @@ void processMenuEvents(int option) {
 
 	switch (option)
 	{
-	case 14:
+	case 15:
 		simulationIsRunning = !simulationIsRunning;
 		break;
 	default:
@@ -216,6 +219,9 @@ void processPositionModeMenuEvents(int option) {
 		positionMode = POSITION_CONTINENT;
 		break;
 	case 13:
+		positionMode = POSITION_WORLD_SYSTEM;
+		break;
+	case 14:
 		positionMode = POSITION_RANDOM;
 	default:
 		break;
@@ -235,6 +241,10 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 	else if (positionMode == POSITION_CONTINENT) {
 		position = pNode->m_afContinentPosition;
 	}
+	else if (positionMode == POSITION_WORLD_SYSTEM) {
+		position = pNode->m_afWorldSystemPosition;
+	}
+
 	unsigned int continent = pNode->m_uiContinent; // The continent id of the nodes country
 	unsigned int worldSystem = pNode->m_uiWorldSystem; // The system the nodes country belongs to (IE: England = 1st world) (even under the tories...)
 
@@ -254,7 +264,7 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 		colourRed(pNode);
 	}
 
-	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
+	glTranslatef(position[0], position[1], position[2]); // Translate the camera to the nodes position
 
 	if (renderMode == RENDER_DEFAULT) {
 		renderDefault(pNode, worldSystem);
@@ -355,7 +365,7 @@ void setContinentPosition(chNode* pNode) {
 	float continentPosition[4];
 	vecInit(continentPosition);
 	
-	int idx = pNode->m_uiContinent-1;
+	int idx = pNode->m_uiContinent - 1;
 	continents[idx] += 1;
 	
 	continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
@@ -363,6 +373,22 @@ void setContinentPosition(chNode* pNode) {
 	continentPosition[2] = 0.0f;
 	
 	vecCopy(continentPosition, pNode->m_afContinentPosition);
+	
+}
+
+int worldSystems[3] = { 0,0,0 };
+void setWorldSystemPosition(chNode* pNode) {
+	float worldSystemPosition[4];
+	vecInit(worldSystemPosition);
+
+	int idx = pNode->m_uiWorldSystem - 1;
+	worldSystems[idx] += 1;
+
+	worldSystemPosition[0] = pNode->m_uiWorldSystem * nodeSpacingX;
+	worldSystemPosition[1] = worldSystems[idx] * nodeSpacingY;
+	worldSystemPosition[2] = 0.0f;
+
+	vecCopy(worldSystemPosition, pNode->m_afWorldSystemPosition);
 	
 }
 
@@ -384,6 +410,10 @@ void arcDisplay(chArc* pArc) // function to render an arc (called from display()
 	else if (positionMode == POSITION_CONTINENT) {
 		arcPos0 = m_pNode0->m_afContinentPosition;
 		arcPos1 = m_pNode1->m_afContinentPosition;
+	}
+	else if (positionMode == POSITION_WORLD_SYSTEM) {
+		arcPos0 = m_pNode0->m_afWorldSystemPosition;
+		arcPos1 = m_pNode1->m_afWorldSystemPosition;
 	}
 
 	glEnable(GL_COLOR_MATERIAL);
@@ -504,8 +534,11 @@ void calculateMotion(chNode* pNode) {
 		pNode->m_afPosition[2] = pNode->m_afPosition[2] + time_step * pNode->m_afVelocity[2] + pNode->m_afAcceleration[2] * pow(time_step, 2.0f) / 2.0f;
 	}
 	else if (positionMode == POSITION_CONTINENT) {
-		pNode->m_afContinentPosition[0] = pNode->m_afContinentPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
-		pNode->m_afContinentPosition[1] = pNode->m_afContinentPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
+
+	}
+	else if (positionMode == POSITION_WORLD_SYSTEM) {
+		pNode->m_afWorldSystemPosition[0] = pNode->m_afWorldSystemPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
+		pNode->m_afWorldSystemPosition[1] = pNode->m_afWorldSystemPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
 	}
 }
 
@@ -704,6 +737,7 @@ void myInit()
 	parse(g_acFile, parseSection, parseNetwork, parseArc, parsePartition, parseVector);
 	visitNodes(&g_System, generateRandomPositions); // generate random positions to switch between
 	visitNodes(&g_System, setContinentPosition);
+	visitNodes(&g_System, setWorldSystemPosition);
 	createMenu();
 }
 
