@@ -421,13 +421,16 @@ void arcDisplay(chArc* pArc) // function to render an arc (called from display()
 	float* arcPos0; // pull the position of the node representing the start of the arc
 	float* arcPos1; // pull the position of the node representing the end of the arc
 
-	if (nodePositionIsRandom) {
+	if (positionMode == POSITION_RANDOM) {
 		arcPos0 = m_pNode0->m_afRandomPosition;
 		arcPos1 = m_pNode1->m_afRandomPosition;
-	}
-	else {
+	} else if (positionMode == POSITION_DEFAULT){
 		arcPos0 = m_pNode0->m_afPosition;
 		arcPos1 = m_pNode1->m_afPosition;
+	}
+	else if (positionMode == POSITION_CONTINENT) {
+		arcPos0 = m_pNode0->m_afContinentPosition;
+		arcPos1 = m_pNode1->m_afContinentPosition;
 	}
 
 	glEnable(GL_COLOR_MATERIAL);
