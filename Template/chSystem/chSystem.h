@@ -18,6 +18,7 @@ typedef struct _chNode
 {
 	unsigned int m_uiId;
 	float m_afPosition[4];
+	float m_afRandomPosition[4];
 	float m_fMass;
 	unsigned int m_uiContinent;
 	unsigned int m_uiWorldSystem;
