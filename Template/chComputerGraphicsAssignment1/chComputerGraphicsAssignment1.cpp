@@ -72,7 +72,7 @@ void myInit(); // the myinit function runs once, before rendering starts and sho
 void nodeDisplay(chNode* pNode); // callled by the display function to draw nodes
 void arcDisplay(chArc* pArc); // called by the display function to draw arcs
 void buildGrid(); 
-void generateRandomPositions(float x[], float y[], float z[]); // will generate random vertex's for each node to give new positions
+void generateRandomPositions(chNode* pNode); // will generate random vertecies for each node to give new positions
 void resetForce(chNode* pNode);
 void calculateDistance(chArc* pArc);
 void createMenu();
@@ -220,13 +220,10 @@ void arcDisplay(chArc* pArc) // function to render an arc (called from display()
 }
 
 // This function will generate a random vertex for each node present in the list
-// TODO: THIS IS DOGSHITE FIX IT
-void generateRandomPositions(float x[], float y[], float z[]) {
-	for (int i = 0; i < 80; i++) {
-		x[i] = randFloat(-1000, 1000);
-		y[i] = randFloat(-1000, 1000);
-		z[i] = randFloat(-1000, 1000);
-	}
+void generateRandomPositions(chNode* pNode) {
+	pNode->m_afRandomPosition[0] = randFloat(-500, 500);
+	pNode->m_afRandomPosition[1] = randFloat(-500, 500);
+	pNode->m_afRandomPosition[2] = randFloat(-500, 500);
 }
 
 // Step 1 of simulation
@@ -421,7 +418,7 @@ void keyboard(unsigned char c, int iXPos, int iYPos)
 		break;
 	case 'r':
 		if (!nodePositionIsRandom) {
-			generateRandomPositions(x_position, y_position, z_position);
+			visitNodes(&g_System, generateRandomPositions);
 		}
 		nodePositionIsRandom = !nodePositionIsRandom;
 		printf("[INFO]: Node position is random changed: new Value %s \n", nodePositionIsRandom ? "True" : "False");
@@ -523,7 +520,7 @@ void myInit()
 	// initialise the data system and load the data file
 	initSystem(&g_System);
 	parse(g_acFile, parseSection, parseNetwork, parseArc, parsePartition, parseVector);
-	generateRandomPositions(x_position, y_position, z_position);
+	visitNodes(&g_System, generateRandomPositions);
 	createMenu();
 }
 
