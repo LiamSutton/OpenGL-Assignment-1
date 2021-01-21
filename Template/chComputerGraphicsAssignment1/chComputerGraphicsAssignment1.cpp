@@ -115,7 +115,14 @@ void processMenuEvents(int option) {
 }
 void nodeDisplay(chNode* pNode) // function to render a node (called from display())
 {
-	float* position = pNode->m_afPosition; // The world position of the node
+	float* position; // The world position of the node
+
+	if (nodePositionIsRandom) {
+		position = pNode->m_afRandomPosition;
+	}
+	else {
+		position = pNode->m_afPosition;
+	}
 	unsigned int continent = pNode->m_uiContinent; // The continent id of the nodes country
 	unsigned int worldSystem = pNode->m_uiWorldSystem; // The system the nodes country belongs to (IE: England = 1st world)
 
@@ -153,13 +160,7 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 		utilitiesColourToMat(afCol, 2.0f);
 	}
 
-	if (nodePositionIsRandom) {
-		unsigned int idx = pNode->m_uiId;
-		glTranslatef(x_position[idx], y_position[idx], z_position[idx]);
-	}
-	else {
-		glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
-	}
+	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
 
 
 	if (worldSystem == 1) { // First world
@@ -194,28 +195,28 @@ void arcDisplay(chArc* pArc) // function to render an arc (called from display()
 	chNode* m_pNode0 = pArc->m_pNode0; // Get a refference to the node representing the start of the arc
 	chNode* m_pNode1 = pArc->m_pNode1; // Get a refference to the node representing the end of the arc
 
-	float* arcPos0 = m_pNode0->m_afPosition; // Pull the position of the start node
-	float* arcPos1 = m_pNode1->m_afPosition; // Pull the position of the end node
+	float* arcPos0; // pull the position of the node representing the start of the arc
+	float* arcPos1; // pull the position of the node representing the end of the arc
+
+	if (nodePositionIsRandom) {
+		arcPos0 = m_pNode0->m_afRandomPosition;
+		arcPos1 = m_pNode1->m_afRandomPosition;
+	}
+	else {
+		arcPos0 = m_pNode0->m_afPosition;
+		arcPos1 = m_pNode1->m_afPosition;
+	}
 
 	glEnable(GL_COLOR_MATERIAL);
 	glDisable(GL_LIGHTING);
 
 	glBegin(GL_LINES);
-	if (nodePositionIsRandom) {
-		unsigned int idx0 = m_pNode0->m_uiId;
-		unsigned int idx1 = m_pNode1->m_uiId;
+	
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(arcPos0[0], arcPos0[1], arcPos0[2]);
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(arcPos1[0], arcPos1[1], arcPos1[2]);
 
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glVertex3f(x_position[idx0], y_position[idx0], z_position[idx0]);
-		glColor3f(0.0f, 1.0f, 0.0f);
-		glVertex3f(x_position[idx1], y_position[idx1], z_position[idx1]);
-	}
-	else {
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glVertex3f(arcPos0[0], arcPos0[1], arcPos0[2]);
-		glColor3f(0.0f, 1.0f, 0.0f);
-		glVertex3f(arcPos1[0], arcPos1[1], arcPos1[2]);
-	}
 	glEnd();
 }
 
