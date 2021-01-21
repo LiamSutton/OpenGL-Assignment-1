@@ -94,6 +94,8 @@ void renderSpheres(chNode* pNode);
 
 void colourDefault(chNode* pNode, unsigned int continent);
 void colourGreen(chNode* pNode);
+void colourRed(chNode* pNode);
+void colourBlue(chNode* pNode);
 
 void createMenu() {
 	
@@ -206,14 +208,15 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 
 	if (colourMode == COLOUR_MODE_DEFAULT) {
 		colourDefault(pNode, continent);
-		printf("COLOUR MODE DEFAULT");
 	}
 	else if (colourMode == COLOUR_MODE_GREEN) {
 		colourGreen(pNode);
-		printf("COLOUR MODE GREEN");
 	}
 	else if (colourMode == COLOUR_MODE_BLUE) {
-
+		colourBlue(pNode);
+	}
+	else if (colourMode == COLOUR_MODE_RED) {
+		colourRed(pNode);
 	}
 
 	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
@@ -293,7 +296,17 @@ void colourDefault(chNode* pNode, unsigned int continent) {
 }
 
 void colourGreen(chNode* pNode) {
+	float afCol[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+	utilitiesColourToMat(afCol, 2.0f);
+}
+
+void colourRed(chNode* pNode) {
 	float afCol[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+	utilitiesColourToMat(afCol, 2.0f);
+}
+
+void colourBlue(chNode* pNode) {
+	float afCol[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
 	utilitiesColourToMat(afCol, 2.0f);
 }
 
