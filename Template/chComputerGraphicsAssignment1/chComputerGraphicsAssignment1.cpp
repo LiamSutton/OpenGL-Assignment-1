@@ -46,6 +46,7 @@ const static int RENDER_DEFAULT = 0;
 const static int RENDER_SPHERES = 1;
 
 static int mainMenu;
+static int renderModeMenu;
 // global var: file to load data from
 char g_acFile[256];
 
@@ -79,16 +80,18 @@ void calculateDistance(chArc* pArc);
 void createMenu();
 void processMenuEvents(int option);
 void renderDefault(chNode* pNode, unsigned int worldSystem);
+void renderSpheres(chNode* pNode);
 
 void createMenu() {
 	
 	mainMenu = glutCreateMenu(processMenuEvents);
-
 	glutAddMenuEntry("Toggle Edges", 1);
 	glutAddMenuEntry("Toggle Nodes", 2);
 	glutAddMenuEntry("Toggle Text", 3);
 	glutAddMenuEntry("Toggle Grid", 4);
 	glutAddMenuEntry("Toggle Solver", 5);
+	glutAddMenuEntry("Render Spheres", 6);
+	glutAddMenuEntry("Render Default", 7);
 
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
@@ -110,6 +113,12 @@ void processMenuEvents(int option) {
 		break;
 	case 5:
 		simulationIsRunning = !simulationIsRunning;
+		break;
+	case 6:
+		renderMode = RENDER_SPHERES;
+		break;
+	case 7:
+		renderMode = RENDER_DEFAULT;
 		break;
 	default:
 		break;
@@ -166,6 +175,10 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 
 	if (renderMode == RENDER_DEFAULT) {
 		renderDefault(pNode, worldSystem);
+	}
+
+	if (renderMode == RENDER_SPHERES) {
+		renderSpheres(pNode);
 	}
 
 	if (shouldRenderText) {
