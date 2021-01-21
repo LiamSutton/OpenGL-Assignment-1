@@ -46,6 +46,7 @@ const static int RENDER_DEFAULT = 0;
 const static int RENDER_SPHERES = 1;
 
 static int mainMenu;
+static int toggleMenu;
 static int renderModeMenu;
 // global var: file to load data from
 char g_acFile[256];
@@ -79,47 +80,73 @@ void resetForce(chNode* pNode);
 void calculateDistance(chArc* pArc);
 void createMenu();
 void processMenuEvents(int option);
+void processRenderModeMenuEvents(int option);
+void processToggleModeMenuEvents(int option);
 void renderDefault(chNode* pNode, unsigned int worldSystem);
 void renderSpheres(chNode* pNode);
 
 void createMenu() {
 	
-	mainMenu = glutCreateMenu(processMenuEvents);
-	glutAddMenuEntry("Toggle Edges", 1);
-	glutAddMenuEntry("Toggle Nodes", 2);
-	glutAddMenuEntry("Toggle Text", 3);
-	glutAddMenuEntry("Toggle Grid", 4);
-	glutAddMenuEntry("Toggle Solver", 5);
-	glutAddMenuEntry("Render Spheres", 6);
-	glutAddMenuEntry("Render Default", 7);
+	renderModeMenu = glutCreateMenu(processRenderModeMenuEvents);
+	glutAddMenuEntry("Default", 1);
+	glutAddMenuEntry("Spheres", 2);
 
+	toggleMenu = glutCreateMenu(processToggleModeMenuEvents);
+	glutAddMenuEntry("Toggle Arcs", 3);
+	glutAddMenuEntry("Toggle Text", 4);
+	glutAddMenuEntry("Toggle Nodes", 5);
+	glutAddMenuEntry("Toggle Grid", 6);
+
+	mainMenu = glutCreateMenu(processMenuEvents);
+	glutAddMenuEntry("Toggle Solver", 7);
+
+	glutAddSubMenu("Render Modes", renderModeMenu);
+	glutAddSubMenu("Toggle Options", toggleMenu);
+
+
+	// Attatch the menu to the right button
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
 void processMenuEvents(int option) {
+
+	switch (option)
+	{
+	case 7:
+		simulationIsRunning = !simulationIsRunning;
+		break;
+	default:
+		break;
+	}
+}
+
+void processRenderModeMenuEvents(int option) {
 	switch (option)
 	{
 	case 1:
-		shouldRenderArcs = !shouldRenderArcs;
-		break;
-	case 2:
-		shouldRenderNodes = !shouldRenderNodes;
-		break;
-	case 3:
-		shouldRenderText = !shouldRenderText;
-		break;
-	case 4:
-		controlToggle(g_Control, csg_uiControlDrawGrid);
-		break;
-	case 5:
-		simulationIsRunning = !simulationIsRunning;
-		break;
-	case 6:
-		renderMode = RENDER_SPHERES;
-		break;
-	case 7:
 		renderMode = RENDER_DEFAULT;
 		break;
+	case 2:
+		renderMode = RENDER_SPHERES;
+		break;
+	default:
+		break;
+	}
+}
+
+void processToggleModeMenuEvents(int option) {
+	switch (option)
+	{
+	case 3:
+		shouldRenderArcs = !shouldRenderArcs;
+		break;
+	case 4:
+		shouldRenderText = !shouldRenderText;
+		break;
+	case 5:
+		shouldRenderNodes = !shouldRenderNodes;
+		break;
+
 	default:
 		break;
 	}
