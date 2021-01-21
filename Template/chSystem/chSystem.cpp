@@ -19,6 +19,7 @@ chNode* initNode(chNode* pNode, unsigned int uiId, float* pfPosition, float fMas
 		vecInitPVec(pNode->m_afPosition);
 		vecCopy(pfPosition, pNode->m_afPosition);
 		vecInitPVec(pNode->m_afRandomPosition);
+		vecInitPVec(pNode->m_afContinentPosition);
 		pNode->m_fMass = fMass;
 		sprintf_s(pNode->m_acName, "%s", acName);
 		pNode->m_uiId = uiId;

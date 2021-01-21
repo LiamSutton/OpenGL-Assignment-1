@@ -52,10 +52,16 @@ const static int COLOUR_MODE_GREEN = 1; // colour all shapes green
 const static int COLOUR_MODE_RED = 2; // colour all shapes red
 const static int COLOUR_MODE_BLUE = 3; //colour all shapes blue
 
+static int positionMode;
+const static int POSITION_DEFAULT = 0;
+const static int POSITION_CONTINENT = 1;
+const static int POSITION_RANDOM = 2;
+
 static int mainMenu;
 static int toggleMenu;
 static int renderModeMenu;
 static int colourModeMenu;
+static int positionModeMenu;
 // global var: file to load data from
 char g_acFile[256];
 
@@ -81,14 +87,17 @@ void myInit(); // the myinit function runs once, before rendering starts and sho
 void nodeDisplay(chNode* pNode); // callled by the display function to draw nodes
 void arcDisplay(chArc* pArc); // called by the display function to draw arcs
 void buildGrid(); 
+void getContinentCount();
 void generateRandomPositions(chNode* pNode); // will generate random vertecies for each node to give new positions
+void setContinentPosition(chNode* pNode);
 void resetForce(chNode* pNode);
-void calculateDistance(chArc* pArc);
 void createMenu();
 void processMenuEvents(int option);
 void processRenderModeMenuEvents(int option);
 void processToggleModeMenuEvents(int option);
 void processColourModeMenuEvents(int option);
+void processPositionModeMenuEvents(int option);
+
 void renderDefault(chNode* pNode, unsigned int worldSystem);
 void renderSpheres(chNode* pNode);
 
@@ -114,12 +123,19 @@ void createMenu() {
 	glutAddMenuEntry("All green", 8);
 	glutAddMenuEntry("All red", 9);
 	glutAddMenuEntry("All blue", 10);
+
+	positionModeMenu = glutCreateMenu(processPositionModeMenuEvents);
+	glutAddMenuEntry("Default positions", 11);
+	glutAddMenuEntry("Group by Continent", 12);
+	glutAddMenuEntry("Randomise Positions", 13);
+
 	mainMenu = glutCreateMenu(processMenuEvents);
-	glutAddMenuEntry("Toggle Solver", 11);
+	glutAddMenuEntry("Toggle Solver", 14);
 
 	glutAddSubMenu("Render Modes", renderModeMenu);
 	glutAddSubMenu("Toggle Options", toggleMenu);
 	glutAddSubMenu("Change Colours", colourModeMenu);
+	glutAddSubMenu("Change Positioning", positionModeMenu);
 
 
 	// Attatch the menu to the right button
@@ -130,7 +146,7 @@ void processMenuEvents(int option) {
 
 	switch (option)
 	{
-	case 11:
+	case 14:
 		simulationIsRunning = !simulationIsRunning;
 		break;
 	default:
@@ -190,15 +206,34 @@ void processColourModeMenuEvents(int option) {
 	}
 }
 
+void processPositionModeMenuEvents(int option) {
+	switch (option)
+	{
+	case 11:
+		positionMode = POSITION_DEFAULT;
+		break;
+	case 12:
+		positionMode = POSITION_CONTINENT;
+		break;
+	case 13:
+		positionMode = POSITION_RANDOM;
+	default:
+		break;
+	}
+}
+
 void nodeDisplay(chNode* pNode) // function to render a node (called from display())
 {
 	float* position; // The world position of the node
 
-	if (nodePositionIsRandom) {
+	if (positionMode == POSITION_RANDOM) {
 		position = pNode->m_afRandomPosition;
 	}
-	else {
+	else if (positionMode == POSITION_DEFAULT) {
 		position = pNode->m_afPosition;
+	}
+	else if (positionMode == POSITION_CONTINENT) {
+		position = pNode->m_afContinentPosition;
 	}
 	unsigned int continent = pNode->m_uiContinent; // The continent id of the nodes country
 	unsigned int worldSystem = pNode->m_uiWorldSystem; // The system the nodes country belongs to (IE: England = 1st world) (even under the tories...)
@@ -309,6 +344,74 @@ void colourBlue(chNode* pNode) {
 	float afCol[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
 	utilitiesColourToMat(afCol, 2.0f);
 }
+
+int europeCount = 0; int africaCount = 0; int oceaniaCount = 0; int northAmericaCount = 0; int southAmericaCount = 0; int asiaCount = 0;
+// set baseline distance betwen nodes
+float nodeSpacingX = 200.0f;
+float nodeSpacingY = 50.0f;
+void setContinentPosition(chNode* pNode) {
+	float continentPosition[4];
+	vecInit(continentPosition);
+	;
+	switch (pNode->m_uiContinent)
+	{
+	case 1:
+		africaCount++;
+		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
+		continentPosition[1] = africaCount * nodeSpacingY;
+		continentPosition[2] = 0.0f;
+		break;
+	case 2:
+		asiaCount++;
+		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
+		continentPosition[1] = asiaCount * nodeSpacingY;
+		continentPosition[2] = 0.0f;
+		break;
+	case 3:
+		europeCount++;
+		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
+		continentPosition[1] = europeCount * nodeSpacingY;
+		continentPosition[2] = 0.0f;
+		break;
+	case 4:
+		northAmericaCount++;
+		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
+		continentPosition[1] = northAmericaCount * nodeSpacingY;
+		continentPosition[2] = 0.0f;
+		break;
+	case 5:
+		oceaniaCount++;
+		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
+		continentPosition[1] = oceaniaCount * nodeSpacingY;
+		continentPosition[2] = 0.0f;
+		break;
+	case 6:
+		southAmericaCount++;
+		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
+		continentPosition[1] = southAmericaCount * nodeSpacingY;
+		continentPosition[2] = 0.0f;
+		break;
+	default:
+		break;
+	}
+
+	vecCopy(continentPosition, pNode->m_afContinentPosition);
+	printf("ID: %d\tName: %s\t position: %f %f %f\n", pNode->m_uiId, pNode->m_acName, pNode->m_afContinentPosition[0], pNode->m_afContinentPosition[1], pNode->m_afContinentPosition[2]);
+}
+
+void getContinentCount() {
+	visitNodes(&g_System, setContinentPosition);
+
+	//printf("Africa Count: %d\n", africaCount);
+	//printf("Asia Count: %d\n", asiaCount);
+	//printf("Europe Count: %d\n", europeCount);
+	//printf("NA Count: %d\n", northAmericaCount);
+	//printf("Oceania Count: %d\n", oceaniaCount);
+	//printf("SA Count: %d\n", southAmericaCount);
+		
+}
+// set counter on how many nodes are currently in each continent
+
 
 void arcDisplay(chArc* pArc) // function to render an arc (called from display())
 {
@@ -633,12 +736,14 @@ void myInit()
 
 	// build the grid display list - display list are a performance optimization 
 	buildGrid();
+	positionMode = POSITION_DEFAULT;
 	renderMode = RENDER_DEFAULT;
 	colourMode = COLOUR_MODE_DEFAULT;
 	// initialise the data system and load the data file
 	initSystem(&g_System);
 	parse(g_acFile, parseSection, parseNetwork, parseArc, parsePartition, parseVector);
 	visitNodes(&g_System, generateRandomPositions); // generate random positions to switch between
+	getContinentCount();
 	createMenu();
 }
 
