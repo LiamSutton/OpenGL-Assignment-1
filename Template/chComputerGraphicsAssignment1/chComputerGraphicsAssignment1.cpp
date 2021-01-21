@@ -42,12 +42,20 @@ const static float dampening_coefficient = 0.2f;
 const static float columb_constant = 0.1f;
 const static float spring_constant = 0.1f;
 
-const static int RENDER_DEFAULT = 0;
-const static int RENDER_SPHERES = 1;
+static int renderMode;	// used to swap between different representations of the nodes
+const static int RENDER_DEFAULT = 0; // render shapes according to world position
+const static int RENDER_SPHERES = 1; // render all shapes as spheres
+
+static int colourMode; // used to swap between differnt coloured representations of nodes
+const static int COLOUR_MODE_DEFAULT = 0; // colour shapes according to their world position
+const static int COLOUR_MODE_GREEN = 1; // colour all shapes green
+const static int COLOUR_MODE_RED = 2; // colour all shapes red
+const static int COLOUR_MODE_BLUE = 3; //colour all shapes blue
 
 static int mainMenu;
 static int toggleMenu;
 static int renderModeMenu;
+static int colourModeMenu;
 // global var: file to load data from
 char g_acFile[256];
 
@@ -56,8 +64,6 @@ bool shouldRenderNodes = true; // used to tell OpenGl whether it should render t
 bool shouldRenderText = true;  // used to tell OpenGl whether it should render the text label for the nodes
 bool nodePositionIsRandom = false; // used to tell OpenGl whether nodes should be positioned randomly
 bool simulationIsRunning = false; // used to tell OpenGl whether the solver should run
-
-int renderMode;	// used to swap between different representations of the nodes
 
 // core functions -> reduce to just the ones needed by glut as pointers to functions to fulfill tasks
 void display(); // The rendering function. This is called once for each frame and you should put rendering code here
@@ -82,8 +88,12 @@ void createMenu();
 void processMenuEvents(int option);
 void processRenderModeMenuEvents(int option);
 void processToggleModeMenuEvents(int option);
+void processColourModeMenuEvents(int option);
 void renderDefault(chNode* pNode, unsigned int worldSystem);
 void renderSpheres(chNode* pNode);
+
+void colourDefault(chNode* pNode, unsigned int continent);
+void colourGreen(chNode* pNode);
 
 void createMenu() {
 	
@@ -97,11 +107,17 @@ void createMenu() {
 	glutAddMenuEntry("Toggle Nodes", 5);
 	glutAddMenuEntry("Toggle Grid", 6);
 
+	colourModeMenu = glutCreateMenu(processColourModeMenuEvents);
+	glutAddMenuEntry("World position colours", 7);
+	glutAddMenuEntry("All green", 8);
+	glutAddMenuEntry("All red", 9);
+	glutAddMenuEntry("All blue", 10);
 	mainMenu = glutCreateMenu(processMenuEvents);
-	glutAddMenuEntry("Toggle Solver", 7);
+	glutAddMenuEntry("Toggle Solver", 11);
 
 	glutAddSubMenu("Render Modes", renderModeMenu);
 	glutAddSubMenu("Toggle Options", toggleMenu);
+	glutAddSubMenu("Change Colours", colourModeMenu);
 
 
 	// Attatch the menu to the right button
@@ -112,7 +128,7 @@ void processMenuEvents(int option) {
 
 	switch (option)
 	{
-	case 7:
+	case 11:
 		simulationIsRunning = !simulationIsRunning;
 		break;
 	default:
@@ -151,6 +167,27 @@ void processToggleModeMenuEvents(int option) {
 		break;
 	}
 }
+
+void processColourModeMenuEvents(int option) {
+	switch (option)
+	{
+	case 7:
+		colourMode = COLOUR_MODE_DEFAULT;
+		break;
+	case 8:
+		colourMode = COLOUR_MODE_GREEN;
+		break;
+	case 9:
+		colourMode = COLOUR_MODE_RED;
+		break;
+	case 10:
+		colourMode = COLOUR_MODE_BLUE;
+		break;
+	default:
+		break;
+	}
+}
+
 void nodeDisplay(chNode* pNode) // function to render a node (called from display())
 {
 	float* position; // The world position of the node
@@ -167,35 +204,16 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 	glPushMatrix(); // Push current matrix
 	glPushAttrib(GL_ALL_ATTRIB_BITS); // Push current attributes
 
-
-	if (continent == 1) { // Africa
-		float afCol[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
+	if (colourMode == COLOUR_MODE_DEFAULT) {
+		colourDefault(pNode, continent);
+		printf("COLOUR MODE DEFAULT");
 	}
-
-	if (continent == 2) { // Asia
-		float afCol[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
+	else if (colourMode == COLOUR_MODE_GREEN) {
+		colourGreen(pNode);
+		printf("COLOUR MODE GREEN");
 	}
+	else if (colourMode == COLOUR_MODE_BLUE) {
 
-	if (continent == 3) { // Europe
-		float afCol[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
-	}
-
-	if (continent == 4) { // North America
-		float afCol[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
-	}
-
-	if (continent == 5) { // Oceania
-		float afCol[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
-	}
-
-	if (continent == 6) { // South America
-		float afCol[4] = { 0.0f, 1.0f, 1.0f, 1.0f };
-		utilitiesColourToMat(afCol, 2.0f);
 	}
 
 	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
@@ -241,6 +259,44 @@ void renderDefault(chNode* pNode, unsigned int worldSystem) {
 void renderSpheres(chNode* pNode) {
 	glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
 }
+
+void colourDefault(chNode* pNode, unsigned int continent) {
+	if (continent == 1) { // Africa
+		float afCol[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 2) { // Asia
+		float afCol[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 3) { // Europe
+		float afCol[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 4) { // North America
+		float afCol[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 5) { // Oceania
+		float afCol[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+
+	if (continent == 6) { // South America
+		float afCol[4] = { 0.0f, 1.0f, 1.0f, 1.0f };
+		utilitiesColourToMat(afCol, 2.0f);
+	}
+}
+
+void colourGreen(chNode* pNode) {
+	float afCol[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+	utilitiesColourToMat(afCol, 2.0f);
+}
+
 void arcDisplay(chArc* pArc) // function to render an arc (called from display())
 {
 	chNode* m_pNode0 = pArc->m_pNode0; // Get a refference to the node representing the start of the arc
@@ -285,8 +341,6 @@ void resetForce(chNode* pNode) {
 	pNode->m_afForce[1] = 0.0f;
 	pNode->m_afForce[2] = 0.0f;
 }
-
-
 
 void hookes(chArc* pArc) {
 	chNode* pNode0 = pArc->m_pNode0; // Reference to node at start of arc
@@ -540,7 +594,6 @@ void motion(int iXPos, int iYPos)
 	if (g_Input.m_bMouse || g_Input.m_bMousePan) camInputSetMouseLast(g_Input, iXPos, iYPos);
 }
 
-
 void myInit()
 {
 	// setup my event control structure
@@ -567,12 +620,12 @@ void myInit()
 
 	// build the grid display list - display list are a performance optimization 
 	buildGrid();
-
+	renderMode = RENDER_DEFAULT;
+	colourMode = COLOUR_MODE_DEFAULT;
 	// initialise the data system and load the data file
 	initSystem(&g_System);
 	parse(g_acFile, parseSection, parseNetwork, parseArc, parsePartition, parseVector);
 	visitNodes(&g_System, generateRandomPositions); // generate random positions to switch between
-	renderMode = RENDER_DEFAULT;
 	createMenu();
 }
 
