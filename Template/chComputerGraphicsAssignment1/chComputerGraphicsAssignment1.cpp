@@ -36,11 +36,10 @@ chControl g_Control; // set of flag controls used in my implmentation to retain 
 const static char csg_acFileParam[] = { "-input" };
 
 const static float k = 0.1f; // the spring constant
-const static float resting_length = 5.0f;
-const static float time_step = 1.0f;
-const static float dampening_coefficient = 0.2f;
-const static float columb_constant = 0.1f;
-const static float spring_constant = 0.1f;
+const static float time_step = 1.0f; // how fast the simulation will progress
+const static float dampening_coefficient = 0.2f; // dampening used to prevent loss of stability
+const static float columb_constant = 0.1f; // used when applying the columb constant
+const static float spring_constant = 0.1f; // how stiff the springs are
 
 static int renderMode;	// used to swap between different representations of the nodes
 const static int RENDER_DEFAULT = 0; // render shapes according to world position
@@ -52,12 +51,13 @@ const static int COLOUR_MODE_GREEN = 1; // colour all shapes green
 const static int COLOUR_MODE_RED = 2; // colour all shapes red
 const static int COLOUR_MODE_BLUE = 3; //colour all shapes blue
 
-static int positionMode;
-const static int POSITION_DEFAULT = 0;
-const static int POSITION_CONTINENT = 1;
-const static int POSITION_WORLD_SYSTEM = 2;
-const static int POSITION_RANDOM = 3;
+static int positionMode; // used to swap between different visualisation views
+const static int POSITION_DEFAULT = 0; // will render as displayed in the file
+const static int POSITION_CONTINENT = 1; // will render countries grouped in their respective contenents
+const static int POSITION_WORLD_SYSTEM = 2; // will render countries grouped in their respective world system
+const static int POSITION_RANDOM = 3; // will completely randomise the position of countries
 
+// menu's
 static int mainMenu;
 static int toggleMenu;
 static int renderModeMenu;
@@ -87,27 +87,27 @@ void motion(int iXPos, int iYPos); // called for each mouse motion event
 void myInit(); // the myinit function runs once, before rendering starts and should be used for setup
 void nodeDisplay(chNode* pNode); // callled by the display function to draw nodes
 void arcDisplay(chArc* pArc); // called by the display function to draw arcs
-void buildGrid(); 
-void getContinentCount();
+void buildGrid();  // builds the grid
 void generateRandomPositions(chNode* pNode); // will generate random vertecies for each node to give new positions
-void setContinentPosition(chNode* pNode);
-void setWorldSystemPosition(chNode* pNode);
-void resetForce(chNode* pNode);
-void createMenu();
-void processMenuEvents(int option);
-void processRenderModeMenuEvents(int option);
-void processToggleModeMenuEvents(int option);
-void processColourModeMenuEvents(int option);
-void processPositionModeMenuEvents(int option);
+void setContinentPosition(chNode* pNode); // generates positions for nodes when they are to be grouped by continent
+void setWorldSystemPosition(chNode* pNode); // generates positions for nodes when they are to be grouped by world system
+void resetForce(chNode* pNode); // resets the force being applied to a node to 0
+void createMenu(); // used to setup user interface
+void processMenuEvents(int option); // handles main menu events
+void processRenderModeMenuEvents(int option); // handles render sub-menu events
+void processToggleModeMenuEvents(int option); // handles toggle sub-menu events
+void processColourModeMenuEvents(int option); // handles colour sub-menu events
+void processPositionModeMenuEvents(int option); // handles position sub-menu events
 
-void renderDefault(chNode* pNode, unsigned int worldSystem);
-void renderSpheres(chNode* pNode);
+void renderDefault(chNode* pNode, unsigned int worldSystem); // render nodes as different shapes corresponding to attributes
+void renderSpheres(chNode* pNode); // render nodes all as spheres
 
-void colourDefault(chNode* pNode, unsigned int continent);
-void colourGreen(chNode* pNode);
-void colourRed(chNode* pNode);
-void colourBlue(chNode* pNode);
+void colourDefault(chNode* pNode, unsigned int continent); // render nodes as different colours corresponding to their attributes
+void colourGreen(chNode* pNode); // render all nodes as green
+void colourRed(chNode* pNode); //  render all nodes as red
+void colourBlue(chNode* pNode); // render all nodes as blue
 
+// setup required menus / sub-menus to allow the user to tweak the simulation
 void createMenu() {
 	
 	renderModeMenu = glutCreateMenu(processRenderModeMenuEvents);
@@ -145,6 +145,7 @@ void createMenu() {
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
+// process events fired from the main menu
 void processMenuEvents(int option) {
 
 	switch (option)
@@ -157,6 +158,7 @@ void processMenuEvents(int option) {
 	}
 }
 
+// process events fired from the render sub-menu
 void processRenderModeMenuEvents(int option) {
 	switch (option)
 	{
@@ -171,6 +173,7 @@ void processRenderModeMenuEvents(int option) {
 	}
 }
 
+// process events fired from the toggle sub-menu
 void processToggleModeMenuEvents(int option) {
 	switch (option)
 	{
@@ -189,6 +192,7 @@ void processToggleModeMenuEvents(int option) {
 	}
 }
 
+// process events fired from the colour sub-menu
 void processColourModeMenuEvents(int option) {
 	switch (option)
 	{
@@ -209,6 +213,7 @@ void processColourModeMenuEvents(int option) {
 	}
 }
 
+// process events fired from the position sub-menu
 void processPositionModeMenuEvents(int option) {
 	switch (option)
 	{
@@ -232,6 +237,7 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 {
 	float* position; // The world position of the node
 
+	// alter the position nodes are rendered at based on the current render mode
 	if (positionMode == POSITION_RANDOM) {
 		position = pNode->m_afRandomPosition;
 	}
@@ -251,6 +257,7 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 	glPushMatrix(); // Push current matrix
 	glPushAttrib(GL_ALL_ATTRIB_BITS); // Push current attributes
 
+	// alter the colour nodes are rendered with based on the current colour mode
 	if (colourMode == COLOUR_MODE_DEFAULT) {
 		colourDefault(pNode, continent);
 	}
@@ -266,6 +273,7 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 
 	glTranslatef(position[0], position[1], position[2]); // Translate the camera to the nodes position
 
+	// alter the shape nodes are rendered using based on the current render mode
 	if (renderMode == RENDER_DEFAULT) {
 		renderDefault(pNode, worldSystem);
 	}
@@ -274,6 +282,7 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 		renderSpheres(pNode);
 	}
 
+	// render lables above each node
 	if (shouldRenderText) {
 		glTranslatef(0.0f, 20.0f, 0.0f); // Translate so text will render 20 units above center node
 		glScalef(10.0f, 10.0f, 10.0f); // Scale up the text for readability
@@ -286,6 +295,7 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 	glPopAttrib(); // Pop attributes and return to previous state
 }
 
+// render the nodes using shapes corresponding to their world system
 void renderDefault(chNode* pNode, unsigned int worldSystem) {
 	if (worldSystem == 1) { // First world
 		glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
@@ -304,10 +314,12 @@ void renderDefault(chNode* pNode, unsigned int worldSystem) {
 
 }
 
+// render nodes using only spheres
 void renderSpheres(chNode* pNode) {
 	glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
 }
 
+// colour nodes based on their continent
 void colourDefault(chNode* pNode, unsigned int continent) {
 	if (continent == 1) { // Africa
 		float afCol[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
@@ -340,26 +352,30 @@ void colourDefault(chNode* pNode, unsigned int continent) {
 	}
 }
 
+// colour nodes green
 void colourGreen(chNode* pNode) {
 	float afCol[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
 	utilitiesColourToMat(afCol, 2.0f);
 }
 
+// colour nodes red
 void colourRed(chNode* pNode) {
 	float afCol[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
 	utilitiesColourToMat(afCol, 2.0f);
 }
 
+// colour nodes blue
 void colourBlue(chNode* pNode) {
 	float afCol[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
 	utilitiesColourToMat(afCol, 2.0f);
 }
 
-;
 // set baseline distance betwen nodes
 float nodeSpacingX = 200.0f;
 float nodeSpacingY = 50.0f;
 int continents[6] = { 0,0,0,0,0,0};
+
+// generates positions for nodes and spaces them out according to their continent and the order they were loaded in
 void setContinentPosition(chNode* pNode) {
 
 	float continentPosition[4];
@@ -377,6 +393,8 @@ void setContinentPosition(chNode* pNode) {
 }
 
 int worldSystems[3] = { 0,0,0 };
+
+// generates positions for nodes and spaces them out according to their world system and the order they were loaded in
 void setWorldSystemPosition(chNode* pNode) {
 	float worldSystemPosition[4];
 	vecInit(worldSystemPosition);
@@ -400,10 +418,12 @@ void arcDisplay(chArc* pArc) // function to render an arc (called from display()
 	float* arcPos0; // pull the position of the node representing the start of the arc
 	float* arcPos1; // pull the position of the node representing the end of the arc
 
+	// alter the positions arcs are drawn from and to based on the current coordinates being uised for the node
 	if (positionMode == POSITION_RANDOM) {
 		arcPos0 = m_pNode0->m_afRandomPosition;
 		arcPos1 = m_pNode1->m_afRandomPosition;
-	} else if (positionMode == POSITION_DEFAULT){
+	} 
+	else if (positionMode == POSITION_DEFAULT){
 		arcPos0 = m_pNode0->m_afPosition;
 		arcPos1 = m_pNode1->m_afPosition;
 	}
@@ -421,6 +441,7 @@ void arcDisplay(chArc* pArc) // function to render an arc (called from display()
 
 	glBegin(GL_LINES);
 	
+	// draw the arc
 	glColor3f(1.0f, 0.0f, 0.0f);
 	glVertex3f(arcPos0[0], arcPos0[1], arcPos0[2]);
 	glColor3f(0.0f, 1.0f, 0.0f);
@@ -436,7 +457,7 @@ void generateRandomPositions(chNode* pNode) {
 	pNode->m_afRandomPosition[2] = randFloat(-500, 500);
 }
 
-// Step 1 of simulation
+// set force being applied to 0
 void resetForce(chNode* pNode) {
 	// reset the resultant force F to 0
 	pNode->m_afForce[0] = 0.0f;
@@ -444,6 +465,7 @@ void resetForce(chNode* pNode) {
 	pNode->m_afForce[2] = 0.0f;
 }
 
+// applies hookes law when the simulation is running
 void hookes(chArc* pArc) {
 	chNode* pNode0 = pArc->m_pNode0; // Reference to node at start of arc
 	chNode* pNode1 = pArc->m_pNode1; // Reference to node at end of arc
@@ -466,13 +488,14 @@ void hookes(chArc* pArc) {
 	float springForceX = -1 * spring_constant * d * xUnit; // calculate spring force x axis
 	float springForceY = -1 * spring_constant * d * yUnit; // calculate spring force y axis
 	float springForceZ = -1 * spring_constant * d * zUnit; // calculate spring force z axis
+	
 
 	pNode0->m_afForce[0] += springForceX; // apply force to start nodes x axis
 	pNode0->m_afForce[1] += springForceY; // apply force to start nodes y axis
 	pNode0->m_afForce[2] += springForceZ; // apply force to start nodes z axis
-
 }
 
+// applies coulombs law when the simulation is running (this caused odd behaviour so it has been removed from the main loop)
 void coulombs(chArc* pArc) {
 	chNode* pNode0 = pArc->m_pNode0; // Reference to node at start of arc
 	chNode* pNode1 = pArc->m_pNode1; // Reference to node at end of arc
@@ -496,21 +519,6 @@ void coulombs(chArc* pArc) {
 	pNode0->m_afForce[2] += coulombForceZ;
 }
 
-void moveNodes(chArc* pArc) {
-	chNode* pNode0 = pArc->m_pNode0;
-
-	if (nodePositionIsRandom) {
-		pNode0->m_afRandomPosition[0] += pNode0->m_afForce[0] / pNode0->m_fMass;
-		pNode0->m_afRandomPosition[1] += pNode0->m_afForce[1] / pNode0->m_fMass;
-		pNode0->m_afRandomPosition[2] += pNode0->m_afForce[2] / pNode0->m_fMass;
-	}
-	else {
-		pNode0->m_afPosition[0] += pNode0->m_afForce[0] / pNode0->m_fMass;
-		pNode0->m_afPosition[1] += pNode0->m_afForce[1] / pNode0->m_fMass;
-		pNode0->m_afPosition[2] += pNode0->m_afForce[2] / pNode0->m_fMass;
-	}
-}
-
 void calculateMotion(chNode* pNode) {
 	
 	// Calculate acceleration due to the spring force.
@@ -523,6 +531,7 @@ void calculateMotion(chNode* pNode) {
 	pNode->m_afVelocity[1] = (pNode->m_afVelocity[1] + time_step * pNode->m_afAcceleration[1]) * dampening_coefficient;
 	pNode->m_afVelocity[2] = (pNode->m_afVelocity[2] + time_step * pNode->m_afAcceleration[2]) * dampening_coefficient;
 
+	// apply force to the positioning system the node is currently using
 	if (positionMode == POSITION_RANDOM) {
 		pNode->m_afRandomPosition[0] = pNode->m_afRandomPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
 		pNode->m_afRandomPosition[1] = pNode->m_afRandomPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
@@ -534,7 +543,8 @@ void calculateMotion(chNode* pNode) {
 		pNode->m_afPosition[2] = pNode->m_afPosition[2] + time_step * pNode->m_afVelocity[2] + pNode->m_afAcceleration[2] * pow(time_step, 2.0f) / 2.0f;
 	}
 	else if (positionMode == POSITION_CONTINENT) {
-
+		pNode->m_afContinentPosition[0] = pNode->m_afContinentPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
+		pNode->m_afContinentPosition[1] = pNode->m_afContinentPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
 	}
 	else if (positionMode == POSITION_WORLD_SYSTEM) {
 		pNode->m_afWorldSystemPosition[0] = pNode->m_afWorldSystemPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
@@ -626,15 +636,14 @@ void keyboard(unsigned char c, int iXPos, int iYPos)
 		printf("[INFO]: Should render arcs changed: new Value: %s \n", shouldRenderArcs ? "True" : "False");
 		break;
 	case '3':
-		//shouldRenderText = !shouldRenderText; // Toggle the drawing of text (country names)
+		shouldRenderText = !shouldRenderText; // Toggle the drawing of text (country names)
 		printf("[INFO]: Should render text changed: new Value: %s \n", shouldRenderText ? "True" : "False");
 		break;
 	case 'r':
-		if (!nodePositionIsRandom) {
-			visitNodes(&g_System, generateRandomPositions); // generate a new set of positions for the nodes
-		}
-		nodePositionIsRandom = !nodePositionIsRandom;
-		simulationIsRunning = false; // dont want the simulation to continue running between changes
+		visitNodes(&g_System, generateRandomPositions); // generate a new set of positions for the nodes
+		positionMode = POSITION_RANDOM;
+		break;
+
 		printf("[INFO]: Node position is random changed: new Value %s \n", nodePositionIsRandom ? "True" : "False");
 		break;
 	case 't':
@@ -656,6 +665,7 @@ void keyboardUp(unsigned char c, int iXPos, int iYPos)
 	}
 }
 
+// keyboard movement
 void sKeyboard(int iC, int iXPos, int iYPos)
 {
 	// detect the pressing of arrow keys for ouse zoom and record the state for processing by the camera
@@ -736,11 +746,11 @@ void myInit()
 	initSystem(&g_System);
 	parse(g_acFile, parseSection, parseNetwork, parseArc, parsePartition, parseVector);
 	visitNodes(&g_System, generateRandomPositions); // generate random positions to switch between
-	visitNodes(&g_System, setContinentPosition);
-	visitNodes(&g_System, setWorldSystemPosition);
-	createMenu();
+	visitNodes(&g_System, setContinentPosition); // generate positions for nodes based on their continent
+	visitNodes(&g_System, setWorldSystemPosition); // generate positions for nodes based on their world system
+	createMenu(); // create the menu to allow the user to tweak values
 }
-
+// main function
 int main(int argc, char* argv[])
 {
 	// check parameters to pull out the path and file name for the data file
@@ -788,6 +798,7 @@ int main(int argc, char* argv[])
 	}
 }
 
+// constructs a grid to give perspective
 void buildGrid()
 {
 	if (!gs_uiGridDisplayList) gs_uiGridDisplayList = glGenLists(1); // create a display list
