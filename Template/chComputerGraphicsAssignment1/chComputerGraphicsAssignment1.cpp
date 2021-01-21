@@ -42,6 +42,9 @@ const static float dampening_coefficient = 0.2f;
 const static float columb_constant = 0.1f;
 const static float spring_constant = 0.1f;
 
+const static int RENDER_DEFAULT = 0;
+const static int RENDER_SPHERES = 1;
+
 static int mainMenu;
 // global var: file to load data from
 char g_acFile[256];
@@ -51,10 +54,8 @@ bool shouldRenderNodes = true; // used to tell OpenGl whether it should render t
 bool shouldRenderText = true;  // used to tell OpenGl whether it should render the text label for the nodes
 bool nodePositionIsRandom = false; // used to tell OpenGl whether nodes should be positioned randomly
 bool simulationIsRunning = false; // used to tell OpenGl whether the solver should run
-// Used when user selects position to be random;
-float x_position[80];
-float y_position[80];
-float z_position[80];
+
+int renderMode;	// used to swap between different representations of the nodes
 
 // core functions -> reduce to just the ones needed by glut as pointers to functions to fulfill tasks
 void display(); // The rendering function. This is called once for each frame and you should put rendering code here
@@ -77,6 +78,7 @@ void resetForce(chNode* pNode);
 void calculateDistance(chArc* pArc);
 void createMenu();
 void processMenuEvents(int option);
+void renderDefault(chNode* pNode, unsigned int worldSystem);
 
 void createMenu() {
 	
@@ -124,7 +126,7 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 		position = pNode->m_afPosition;
 	}
 	unsigned int continent = pNode->m_uiContinent; // The continent id of the nodes country
-	unsigned int worldSystem = pNode->m_uiWorldSystem; // The system the nodes country belongs to (IE: England = 1st world)
+	unsigned int worldSystem = pNode->m_uiWorldSystem; // The system the nodes country belongs to (IE: England = 1st world) (even under the tories...)
 
 	glPushMatrix(); // Push current matrix
 	glPushAttrib(GL_ALL_ATTRIB_BITS); // Push current attributes
@@ -162,19 +164,8 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 
 	glTranslated(position[0], position[1], position[2]); // Translate the camera to the nodes position
 
-
-	if (worldSystem == 1) { // First world
-		glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
-	}
-
-	if (worldSystem == 2) { // Second world
-		glutSolidCube(mathsDimensionOfCubeFromVolume(pNode->m_fMass));
-	}
-
-	if (worldSystem == 3) { // Third world
-		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f); // Rotate cone to be facing upwards
-		glutSolidCone(mathsRadiusOfConeFromVolume(pNode->m_fMass), 25, 15, 15);
-		glRotatef(90, 1.0f, 0.0f, 0.0f); // Reverse rotation back for text placement
+	if (renderMode == RENDER_DEFAULT) {
+		renderDefault(pNode, worldSystem);
 	}
 
 	if (shouldRenderText) {
@@ -189,6 +180,27 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 	glPopAttrib(); // Pop attributes and return to previous state
 }
 
+void renderDefault(chNode* pNode, unsigned int worldSystem) {
+	if (worldSystem == 1) { // First world
+		glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
+	}
+
+	if (worldSystem == 2) { // Second world
+		glutSolidCube(mathsDimensionOfCubeFromVolume(pNode->m_fMass));
+	}
+
+	if (worldSystem == 3) { // Third world
+		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f); // Rotate cone to be facing upwards
+		glutSolidCone(mathsRadiusOfConeFromVolume(pNode->m_fMass), 25, 15, 15);
+		glRotatef(90, 1.0f, 0.0f, 0.0f); // Reverse rotation back for text placement
+	}
+
+
+}
+
+void renderSpheres(chNode* pNode) {
+	glutSolidSphere(mathsRadiusOfSphereFromVolume(pNode->m_fMass), 15, 15);
+}
 void arcDisplay(chArc* pArc) // function to render an arc (called from display())
 {
 	chNode* m_pNode0 = pArc->m_pNode0; // Get a refference to the node representing the start of the arc
@@ -519,7 +531,8 @@ void myInit()
 	// initialise the data system and load the data file
 	initSystem(&g_System);
 	parse(g_acFile, parseSection, parseNetwork, parseArc, parsePartition, parseVector);
-	visitNodes(&g_System, generateRandomPositions);
+	visitNodes(&g_System, generateRandomPositions); // generate random positions to switch between
+	renderMode = RENDER_DEFAULT;
 	createMenu();
 }
 
