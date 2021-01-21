@@ -345,73 +345,26 @@ void colourBlue(chNode* pNode) {
 	utilitiesColourToMat(afCol, 2.0f);
 }
 
-int europeCount = 0; int africaCount = 0; int oceaniaCount = 0; int northAmericaCount = 0; int southAmericaCount = 0; int asiaCount = 0;
+;
 // set baseline distance betwen nodes
 float nodeSpacingX = 200.0f;
 float nodeSpacingY = 50.0f;
+int continents[6] = { 0,0,0,0,0,0};
 void setContinentPosition(chNode* pNode) {
+
 	float continentPosition[4];
 	vecInit(continentPosition);
-	;
-	switch (pNode->m_uiContinent)
-	{
-	case 1:
-		africaCount++;
-		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
-		continentPosition[1] = africaCount * nodeSpacingY;
-		continentPosition[2] = 0.0f;
-		break;
-	case 2:
-		asiaCount++;
-		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
-		continentPosition[1] = asiaCount * nodeSpacingY;
-		continentPosition[2] = 0.0f;
-		break;
-	case 3:
-		europeCount++;
-		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
-		continentPosition[1] = europeCount * nodeSpacingY;
-		continentPosition[2] = 0.0f;
-		break;
-	case 4:
-		northAmericaCount++;
-		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
-		continentPosition[1] = northAmericaCount * nodeSpacingY;
-		continentPosition[2] = 0.0f;
-		break;
-	case 5:
-		oceaniaCount++;
-		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
-		continentPosition[1] = oceaniaCount * nodeSpacingY;
-		continentPosition[2] = 0.0f;
-		break;
-	case 6:
-		southAmericaCount++;
-		continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
-		continentPosition[1] = southAmericaCount * nodeSpacingY;
-		continentPosition[2] = 0.0f;
-		break;
-	default:
-		break;
-	}
-
+	
+	int idx = pNode->m_uiContinent-1;
+	continents[idx] += 1;
+	
+	continentPosition[0] = pNode->m_uiContinent * nodeSpacingX;
+	continentPosition[1] = continents[idx] * nodeSpacingY;
+	continentPosition[2] = 0.0f;
+	
 	vecCopy(continentPosition, pNode->m_afContinentPosition);
-	printf("ID: %d\tName: %s\t position: %f %f %f\n", pNode->m_uiId, pNode->m_acName, pNode->m_afContinentPosition[0], pNode->m_afContinentPosition[1], pNode->m_afContinentPosition[2]);
+	
 }
-
-void getContinentCount() {
-	visitNodes(&g_System, setContinentPosition);
-
-	//printf("Africa Count: %d\n", africaCount);
-	//printf("Asia Count: %d\n", asiaCount);
-	//printf("Europe Count: %d\n", europeCount);
-	//printf("NA Count: %d\n", northAmericaCount);
-	//printf("Oceania Count: %d\n", oceaniaCount);
-	//printf("SA Count: %d\n", southAmericaCount);
-		
-}
-// set counter on how many nodes are currently in each continent
-
 
 void arcDisplay(chArc* pArc) // function to render an arc (called from display())
 {
@@ -540,15 +493,19 @@ void calculateMotion(chNode* pNode) {
 	pNode->m_afVelocity[1] = (pNode->m_afVelocity[1] + time_step * pNode->m_afAcceleration[1]) * dampening_coefficient;
 	pNode->m_afVelocity[2] = (pNode->m_afVelocity[2] + time_step * pNode->m_afAcceleration[2]) * dampening_coefficient;
 
-	if (nodePositionIsRandom) {
+	if (positionMode == POSITION_RANDOM) {
 		pNode->m_afRandomPosition[0] = pNode->m_afRandomPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
 		pNode->m_afRandomPosition[1] = pNode->m_afRandomPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
 		pNode->m_afRandomPosition[2] = pNode->m_afRandomPosition[2] + time_step * pNode->m_afVelocity[2] + pNode->m_afAcceleration[2] * pow(time_step, 2.0f) / 2.0f;
 	}
-	else {
+	else if (positionMode == POSITION_DEFAULT) {
 		pNode->m_afPosition[0] = pNode->m_afPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
 		pNode->m_afPosition[1] = pNode->m_afPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
 		pNode->m_afPosition[2] = pNode->m_afPosition[2] + time_step * pNode->m_afVelocity[2] + pNode->m_afAcceleration[2] * pow(time_step, 2.0f) / 2.0f;
+	}
+	else if (positionMode == POSITION_CONTINENT) {
+		pNode->m_afContinentPosition[0] = pNode->m_afContinentPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
+		pNode->m_afContinentPosition[1] = pNode->m_afContinentPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
 	}
 }
 
@@ -746,7 +703,7 @@ void myInit()
 	initSystem(&g_System);
 	parse(g_acFile, parseSection, parseNetwork, parseArc, parsePartition, parseVector);
 	visitNodes(&g_System, generateRandomPositions); // generate random positions to switch between
-	getContinentCount();
+	visitNodes(&g_System, setContinentPosition);
 	createMenu();
 }
 
