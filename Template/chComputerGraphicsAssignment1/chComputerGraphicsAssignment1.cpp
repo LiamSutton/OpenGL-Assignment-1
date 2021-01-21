@@ -179,7 +179,6 @@ void nodeDisplay(chNode* pNode) // function to render a node (called from displa
 
 	if (shouldRenderText) {
 		glTranslatef(0.0f, 20.0f, 0.0f); // Translate so text will render 20 units above center node
-		//glScalef(16, 16, 0.1f) // Chris's value for text scaling
 		glScalef(10.0f, 10.0f, 10.0f); // Scale up the text for readability
 		glMultMatrixf(camRotMatInv(g_Camera)); // Align the currnt stack with the camera (so text is always facing camera)
 		outlinePrint(pNode->m_acName, true); // Render the countries name as a text label
@@ -364,7 +363,6 @@ void idle()
 	if (simulationIsRunning) 
 	{
 		visitNodes(&g_System, resetForce); // for each body, reset the resultant force (f) to zero
-		/*visitArcs(&g_System, calculateDistance);*/
 		visitArcs(&g_System, hookes);
 		visitNodes(&g_System, calculateMotion);
 
@@ -419,9 +417,10 @@ void keyboard(unsigned char c, int iXPos, int iYPos)
 		break;
 	case 'r':
 		if (!nodePositionIsRandom) {
-			visitNodes(&g_System, generateRandomPositions);
+			visitNodes(&g_System, generateRandomPositions); // generate a new set of positions for the nodes
 		}
 		nodePositionIsRandom = !nodePositionIsRandom;
+		simulationIsRunning = false; // dont want the simulation to continue running between changes
 		printf("[INFO]: Node position is random changed: new Value %s \n", nodePositionIsRandom ? "True" : "False");
 		break;
 	case 't':
