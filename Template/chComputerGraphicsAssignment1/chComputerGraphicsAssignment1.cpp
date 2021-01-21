@@ -39,7 +39,7 @@ const static float k = 0.1f; // the spring constant
 const static float resting_length = 5.0f;
 const static float time_step = 1.0f;
 const static float dampening_coefficient = 0.2f;
-const static float columb_constant = 500.0f;
+const static float columb_constant = 0.1f;
 const static float spring_constant = 0.1f;
 
 static int mainMenu;
@@ -234,45 +234,14 @@ void resetForce(chNode* pNode) {
 	pNode->m_afForce[2] = 0.0f;
 }
 
-void calculateDistance(chArc* pArc) 
-{	
-	chNode* pNode0 = pArc->m_pNode0; // Get reference to node at start of arc
-	chNode* pNode1 = pArc->m_pNode1; // Get reference to node at end of arc
 
-	float d[4];
-	vecInit(d);
-
-	float l = 0.0f;
-	// a: Calculate the direction vector between the two nodes forming the arc as d and the distance between the two nodes l
-	vecSub(pNode1->m_afPosition, pNode0->m_afPosition, d);
-	vecNormalise(d, d);
-	l = vecDistance(pNode1->m_afPosition, pNode0->m_afPosition);
-
-	// b: Calculate the spring force (Hookes Law f = exention * coef of restitution) as a vector and accumulate these
-	// within the nodes affected (countries at either end). extention is l - resting length
-	// Regular Hooke's law formulae: f = -kx where k is a spring constant (higher value = stiffer spring) x = dissplacement
-	float extention = l - resting_length;
-
-	float springForce[3];
-	vecInit(springForce);
-	vecScalarProduct(d, ((-1*pArc->m_fSpringCoef)*extention), springForce);
-
-	//printf("Node0: %d, Node1: %d \n", pNode0->m_uiId, pNode1->m_uiId);x
-	printf("Spring Force: x: %f y: %f z: %f \n", springForce[0], springForce[1], springForce[2]);
-
-	// c: Calculate the vector force f for each node
-	// one of the nodes will have have a positive force and the other will have a negative force (newtons 3rd law of motion)
-	// but multiplying the force (scalar) +- f by the direction vector d
-	
-	
-
-}
 
 void hookes(chArc* pArc) {
 	chNode* pNode0 = pArc->m_pNode0; // Reference to node at start of arc
 	chNode* pNode1 = pArc->m_pNode1; // Reference to node at end of arc
 
 	float springLength = pArc->m_fIdealLen; // get the ideal length of the spring (rest)
+	//printf("Ideal spring length: %f\n", springLength);
 	float dx = pNode0->m_afPosition[0] - pNode1->m_afPosition[0]; // Get x distance between the nodes
 	float dy = pNode0->m_afPosition[1] - pNode1->m_afPosition[1]; // Get y distance between the nodes
 	float dz = pNode0->m_afPosition[2] - pNode1->m_afPosition[2]; // Get z distance between the nodes
@@ -280,6 +249,7 @@ void hookes(chArc* pArc) {
 	float distance = sqrt(dx * dx + dy * dy + dz * dz); // Use classical distance formulae
 
 	float d = distance - springLength; // calculate displacement of spring
+	/*printf("Displacement: %f\n\n", d);*/
 
 	float xUnit = dx / distance;
 	float yUnit = dy / distance;
@@ -295,14 +265,36 @@ void hookes(chArc* pArc) {
 
 }
 
+void coulombs(chArc* pArc) {
+	chNode* pNode0 = pArc->m_pNode0; // Reference to node at start of arc
+	chNode* pNode1 = pArc->m_pNode1; // Reference to node at end of arc
+
+	float dx = pNode0->m_afPosition[0] - pNode1->m_afPosition[0]; // Get x distance between the nodes
+	float dy = pNode0->m_afPosition[1] - pNode1->m_afPosition[1]; // Get y distance between the nodes
+	float dz = pNode0->m_afPosition[2] - pNode1->m_afPosition[2]; // Get z distance between the nodes
+
+	float distance = sqrt(dx * dx + dy * dy + dz * dz); // Use classical distance formulae
+
+	float xUnit = dx / distance;
+	float yUnit = dy / distance;
+	float zUnit = dz / distance;
+
+	float coulombForceX = columb_constant * (pNode0->m_fMass * pNode1->m_fMass) / pow(distance, 2.0f) * xUnit;
+	float coulombForceY = columb_constant * (pNode0->m_fMass * pNode1->m_fMass) / pow(distance, 2.0f) * yUnit;
+	float coulombForceZ = columb_constant * (pNode0->m_fMass * pNode1->m_fMass) / pow(distance, 2.0f) * zUnit;
+
+	pNode0->m_afForce[0] += coulombForceX;
+	pNode0->m_afForce[1] += coulombForceY;
+	pNode0->m_afForce[2] += coulombForceZ;
+}
 
 void moveNodes(chArc* pArc) {
 	chNode* pNode0 = pArc->m_pNode0;
 
 	if (nodePositionIsRandom) {
-		x_position[pNode0->m_uiId] += pNode0->m_afForce[0] / pNode0->m_fMass;
-		y_position[pNode0->m_uiId] += pNode0->m_afForce[1] / pNode0->m_fMass;
-		z_position[pNode0->m_uiId] += pNode0->m_afForce[2] / pNode0->m_fMass;
+		pNode0->m_afRandomPosition[0] += pNode0->m_afForce[0] / pNode0->m_fMass;
+		pNode0->m_afRandomPosition[1] += pNode0->m_afForce[1] / pNode0->m_fMass;
+		pNode0->m_afRandomPosition[2] += pNode0->m_afForce[2] / pNode0->m_fMass;
 	}
 	else {
 		pNode0->m_afPosition[0] += pNode0->m_afForce[0] / pNode0->m_fMass;
@@ -312,9 +304,8 @@ void moveNodes(chArc* pArc) {
 }
 
 void calculateMotion(chNode* pNode) {
-
+	
 	// Calculate acceleration due to the spring force.
-
 	// f=ma therefore a=f/m
 	pNode->m_afAcceleration[0] = pNode->m_afForce[0] / pNode->m_fMass;
 	pNode->m_afAcceleration[1] = pNode->m_afForce[1] / pNode->m_fMass;
@@ -324,9 +315,16 @@ void calculateMotion(chNode* pNode) {
 	pNode->m_afVelocity[1] = (pNode->m_afVelocity[1] + time_step * pNode->m_afAcceleration[1]) * dampening_coefficient;
 	pNode->m_afVelocity[2] = (pNode->m_afVelocity[2] + time_step * pNode->m_afAcceleration[2]) * dampening_coefficient;
 
-	pNode->m_afPosition[0] = pNode->m_afPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
-	pNode->m_afPosition[1] = pNode->m_afPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
-	pNode->m_afPosition[2] = pNode->m_afPosition[2] + time_step * pNode->m_afVelocity[2] + pNode->m_afAcceleration[2] * pow(time_step, 2.0f) / 2.0f;
+	if (nodePositionIsRandom) {
+		pNode->m_afRandomPosition[0] = pNode->m_afRandomPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
+		pNode->m_afRandomPosition[1] = pNode->m_afRandomPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
+		pNode->m_afRandomPosition[2] = pNode->m_afRandomPosition[2] + time_step * pNode->m_afVelocity[2] + pNode->m_afAcceleration[2] * pow(time_step, 2.0f) / 2.0f;
+	}
+	else {
+		pNode->m_afPosition[0] = pNode->m_afPosition[0] + time_step * pNode->m_afVelocity[0] + pNode->m_afAcceleration[0] * pow(time_step, 2.0f) / 2.0f;
+		pNode->m_afPosition[1] = pNode->m_afPosition[1] + time_step * pNode->m_afVelocity[1] + pNode->m_afAcceleration[1] * pow(time_step, 2.0f) / 2.0f;
+		pNode->m_afPosition[2] = pNode->m_afPosition[2] + time_step * pNode->m_afVelocity[2] + pNode->m_afAcceleration[2] * pow(time_step, 2.0f) / 2.0f;
+	}
 }
 
 // draw the scene. Called once per frame and should only deal with scene drawing (not updating the simulator)
@@ -363,8 +361,9 @@ void idle()
 	if (simulationIsRunning) 
 	{
 		visitNodes(&g_System, resetForce); // for each body, reset the resultant force (f) to zero
-		visitArcs(&g_System, hookes);
-		visitNodes(&g_System, calculateMotion);
+		//visitArcs(&g_System, coulombs); // Apply coulombs 
+		visitArcs(&g_System, hookes); // apply hookes law
+		visitNodes(&g_System, calculateMotion); // calculate amount of movement for each body
 
 	}
 	controlChangeResetAll(g_Control); // re-set the update status for all of the control flags
